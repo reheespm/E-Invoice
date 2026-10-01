@@ -1,0 +1,369 @@
+@page "/"
+@attribute [Authorize(Policy = Permissions.Dashboard.View)]
+@using Microsoft.AspNetCore.Identity
+@using EInvoice.Application.Cities
+@using EInvoice.Application.Companies
+@using EInvoice.Application.Countries
+@using EInvoice.Application.Dashboard
+@using EInvoice.Application.Roles
+@using EInvoice.Application.Users
+@using EInvoice.Infrastructure.Authorization
+@using EInvoice.Infrastructure.Identity
+@inject IUserManagementService UserService
+@inject IRoleManagementService RoleService
+@inject ICompanyManagementService CompanyService
+@inject ICountryManagementService CountryService
+@inject ICityManagementService CityService
+@inject IDashboardService DashboardService
+@inject UserManager<ApplicationUser> UserManager
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard</PageTitle>
+
+<div class="dashboard-toolbar">
+    <button class="btn btn-outline-secondary btn-sm" @onclick="OpenCustomizePanel">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34ZM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858Z"/></svg>
+        Customize Dashboard
+    </button>
+</div>
+
+<div class="dashboard-widgets">
+    @if (selectedWidgetKeys.Contains(DashboardWidgets.UsersSummary) && canViewUsers)
+    {
+        <div class="dashboard-widget">
+            <h2 class="dashboard-widget-title">Users Summary</h2>
+            <div class="stat-widget">
+                <div class="stat-item">
+                    <span class="stat-icon stat-icon-users">
+                        <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M15 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10Zm-9.995-.944v-.002.002ZM5.022 13h9.956a.274.274 0 0 0 .014-.002 1.5 1.5 0 0 0-.113-.372c-.191-.408-.53-.94-1.04-1.463C12.878 10.216 11.376 9.5 10 9.5c-1.376 0-2.878.716-3.839 1.663-.51.523-.849 1.055-1.04 1.463-.087.185-.129.311-.115.372ZM10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.987A4.5 4.5 0 0 1 6.936 9.28ZM5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/></svg>
+                    </span>
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-value">@totalUsers</div>
+                </div>
+
+                <div class="stat-item">
+                    <span class="stat-icon stat-icon-active">
+                        <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm3.97-9.03a.75.75 0 0 0-1.08-1.04L7.5 9.44 5.7 7.65a.75.75 0 1 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.08-.02l4-4.98Z"/></svg>
+                    </span>
+                    <div class="stat-label">Active Users</div>
+                    <div class="stat-value">@activeUsers</div>
+                </div>
+
+                <div class="stat-item">
+                    <span class="stat-icon stat-icon-locked">
+                        <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2Zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/></svg>
+                    </span>
+                    <div class="stat-label">Locked Out</div>
+                    <div class="stat-value">@lockedUsers</div>
+                </div>
+
+                <div class="stat-item">
+                    <span class="stat-icon stat-icon-roles">
+                        <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path d="M8 8c-3 0-6 1.5-6 4v.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V12c0-2.5-3-4-6-4Z"/></svg>
+                    </span>
+                    <div class="stat-label">Roles</div>
+                    <div class="stat-value">@totalRoles</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (selectedWidgetKeys.Contains(DashboardWidgets.CompaniesSummary) && canViewCompanies)
+    {
+        <div class="dashboard-widget">
+            <h2 class="dashboard-widget-title">Companies Summary</h2>
+            <div class="stat-widget">
+                <div class="stat-item">
+                    <span class="stat-icon stat-icon-users">
+                        <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M4 1a1 1 0 0 0-1 1v13h2v-2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2h2V2a1 1 0 0 0-1-1H4Zm1 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1A.5.5 0 0 1 5 4Zm3.5-.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1ZM5 7a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1A.5.5 0 0 1 5 7Zm3.5-.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1ZM5 10a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1A.5.5 0 0 1 5 10Zm3.5-.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1Z"/><path d="M0 14.5A.5.5 0 0 1 .5 14H1V3a1 1 0 0 1 1-1h1V1a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v11h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5ZM3 3v11h1V3H3Zm10 11V4h-1v10h1Z"/></svg>
+                    </span>
+                    <div class="stat-label">Total Companies</div>
+                    <div class="stat-value">@totalCompanies</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (selectedWidgetKeys.Contains(DashboardWidgets.LocationsSummary) && (canViewCountries || canViewCities))
+    {
+        <div class="dashboard-widget">
+            <h2 class="dashboard-widget-title">Countries &amp; Cities</h2>
+            <div class="stat-widget">
+                @if (canViewCountries)
+                {
+                    <div class="stat-item">
+                        <span class="stat-icon stat-icon-active">
+                            <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm7.5-6.923c-.67.204-1.335.82-1.887 1.855A8 8 0 0 0 5.145 4H7.5V1.077ZM4.09 4a9.3 9.3 0 0 1 .64-1.539 6.7 6.7 0 0 1 .597-.933A7.03 7.03 0 0 0 2.255 4H4.09Zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a6.96 6.96 0 0 0-.656 2.5h2.49ZM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5H4.847ZM8.5 5v2.5h2.99a12.5 12.5 0 0 0-.337-2.5H8.5ZM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5H4.51Zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5H8.5ZM5.145 12c.138.386.295.744.468 1.068.552 1.035 1.218 1.65 1.887 1.855V12H5.145Zm.182 2.472a6.7 6.7 0 0 1-.597-.933A9.3 9.3 0 0 1 4.09 12H2.255a7.03 7.03 0 0 0 3.072 2.472ZM3.82 11a13.7 13.7 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5H3.82Zm6.853 3.472A7.03 7.03 0 0 0 13.745 12H11.91a9.3 9.3 0 0 1-.64 1.539 6.7 6.7 0 0 1-.597.933ZM8.5 12v2.923c.67-.204 1.335-.82 1.887-1.855.173-.324.33-.682.468-1.068H8.5Zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.7 13.7 0 0 1-.312 2.5Zm2.802-3.5a6.96 6.96 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5h2.49ZM11.27 2.461c.247.464.462.98.64 1.539h1.835a7.03 7.03 0 0 0-3.072-2.472c.218.284.418.598.597.933ZM10.855 4a8 8 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4h2.355Z"/></svg>
+                        </span>
+                        <div class="stat-label">Total Countries</div>
+                        <div class="stat-value">@totalCountries</div>
+                    </div>
+                }
+                @if (canViewCities)
+                {
+                    <div class="stat-item">
+                        <span class="stat-icon stat-icon-locked">
+                            <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/><path d="M8 0a5.53 5.53 0 0 0-3.594 1.342c-1.687 1.454-1.859 4.14-.397 5.831L8 13.914l3.99-6.741c1.462-1.691 1.29-4.377-.396-5.831A5.53 5.53 0 0 0 8 0Zm0 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></svg>
+                        </span>
+                        <div class="stat-label">Total Cities</div>
+                        <div class="stat-value">@totalCities</div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (selectedWidgetKeys.Contains(DashboardWidgets.QuickLinks) && visibleQuickLinks.Count > 0)
+    {
+        <div class="dashboard-widget dashboard-widget-wide">
+            <h2 class="dashboard-widget-title">Quick Links</h2>
+            <div class="quick-link-row">
+                @foreach (var link in visibleQuickLinks)
+                {
+                    <a class="quick-link-card" href="@link.Href">
+                        @((MarkupString)GetQuickLinkIconSvg(link.Key))
+                        @link.Title
+                    </a>
+                }
+            </div>
+        </div>
+    }
+
+    @if (selectedWidgetKeys.Count == 0)
+    {
+        <p class="text-muted">No widgets selected. Use <strong>Customize Dashboard</strong> to add some.</p>
+    }
+</div>
+
+@if (showCustomizePanel)
+{
+    <div class="widget-picker-backdrop" @onclick="CloseCustomizePanel">
+        <div class="widget-picker-panel" @onclick:stopPropagation="true">
+            <h3>Customize Dashboard</h3>
+            <p class="text-muted small">Select the widgets you want to see on your dashboard.</p>
+            <div class="widget-picker-list">
+                @foreach (var widget in availableWidgets)
+                {
+                    <label class="widget-picker-item">
+                        <input type="checkbox" checked="@pendingSelection.Contains(widget.Key)"
+                               @onchange="e => ToggleWidget(widget.Key, e.Value)" />
+                        <div>
+                            <div class="widget-picker-item-title">@widget.Title</div>
+                            <div class="widget-picker-item-desc">@widget.Description</div>
+                        </div>
+                    </label>
+                }
+            </div>
+
+            @if (pendingSelection.Contains(DashboardWidgets.QuickLinks) && availableQuickLinks.Count > 0)
+            {
+                <h4 class="widget-picker-subheading">Quick Links to show</h4>
+                <p class="text-muted small">Choose which shortcuts appear in the Quick Links widget.</p>
+                <div class="widget-picker-list">
+                    @foreach (var link in availableQuickLinks)
+                    {
+                        <label class="widget-picker-item">
+                            <input type="checkbox" checked="@pendingQuickLinks.Contains(link.Key)"
+                                   @onchange="e => ToggleQuickLink(link.Key, e.Value)" />
+                            <div>
+                                <div class="widget-picker-item-title">@link.Title</div>
+                            </div>
+                        </label>
+                    }
+                </div>
+            }
+
+            <div class="widget-picker-actions">
+                <button class="btn btn-secondary" @onclick="CloseCustomizePanel">Cancel</button>
+                <button class="btn btn-primary" @onclick="SaveCustomizationAsync">Save</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private Guid currentUserId;
+    private System.Security.Claims.ClaimsPrincipal? currentPrincipal;
+
+    private IReadOnlyList<DashboardWidgetInfo> availableWidgets = Array.Empty<DashboardWidgetInfo>();
+    private List<string> selectedWidgetKeys = new();
+    private HashSet<string> pendingSelection = new();
+    private bool showCustomizePanel;
+
+    private IReadOnlyList<QuickLinkInfo> availableQuickLinks = Array.Empty<QuickLinkInfo>();
+    private List<string> selectedQuickLinkKeys = new();
+    private HashSet<string> pendingQuickLinks = new();
+    private List<QuickLinkInfo> visibleQuickLinks = new();
+
+    private bool canViewUsers;
+    private bool canViewCompanies;
+    private bool canViewCountries;
+    private bool canViewCities;
+
+    private int totalUsers;
+    private int activeUsers;
+    private int lockedUsers;
+    private int totalRoles;
+    private int totalCompanies;
+    private int totalCountries;
+    private int totalCities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is not null)
+        {
+            var authState = await AuthStateTask;
+            currentPrincipal = authState.User;
+            var user = await UserManager.GetUserAsync(authState.User);
+            if (user is not null)
+            {
+                currentUserId = user.Id;
+            }
+        }
+
+        canViewUsers = HasPermission(Permissions.User.View);
+        canViewCompanies = HasPermission(Permissions.Company.View);
+        canViewCountries = HasPermission(Permissions.Country.View);
+        canViewCities = HasPermission(Permissions.City.View);
+
+        availableWidgets = DashboardWidgets.GetAll()
+            .Where(w => w.RequiredPermission is null || HasPermission(w.RequiredPermission))
+            .ToList();
+
+        var saved = currentUserId != Guid.Empty
+            ? await DashboardService.GetSelectedWidgetKeysAsync(currentUserId)
+            : DashboardWidgets.DefaultKeys;
+
+        var availableKeys = availableWidgets.Select(w => w.Key).ToHashSet(StringComparer.Ordinal);
+        selectedWidgetKeys = saved.Where(availableKeys.Contains).ToList();
+
+        availableQuickLinks = QuickLinks.GetAll()
+            .Where(l => l.RequiredPermission is null || HasPermission(l.RequiredPermission))
+            .ToList();
+
+        var savedLinks = currentUserId != Guid.Empty
+            ? await DashboardService.GetSelectedQuickLinkKeysAsync(currentUserId)
+            : QuickLinks.DefaultKeys;
+
+        var availableLinkKeys = availableQuickLinks.Select(l => l.Key).ToHashSet(StringComparer.Ordinal);
+        selectedQuickLinkKeys = savedLinks.Where(availableLinkKeys.Contains).ToList();
+        visibleQuickLinks = availableQuickLinks.Where(l => selectedQuickLinkKeys.Contains(l.Key)).ToList();
+
+        if (canViewUsers)
+        {
+            var users = await UserService.GetUsersAsync();
+            totalUsers = users.Count;
+            activeUsers = users.Count(u => u.IsActive);
+            lockedUsers = users.Count(u => u.IsLockedOut);
+
+            var roles = await RoleService.GetRolesAsync();
+            totalRoles = roles.Count;
+        }
+
+        if (canViewCompanies)
+        {
+            var companies = await CompanyService.GetCompaniesAsync();
+            totalCompanies = companies.Count;
+        }
+
+        if (canViewCountries)
+        {
+            var countries = await CountryService.GetCountriesAsync();
+            totalCountries = countries.Count;
+        }
+
+        if (canViewCities)
+        {
+            var cities = await CityService.GetCitiesAsync();
+            totalCities = cities.Count;
+        }
+    }
+
+    private bool HasPermission(string permission) =>
+        currentPrincipal?.HasClaim(PermissionClaimTypes.Permission, permission) ?? false;
+
+    private void OpenCustomizePanel()
+    {
+        pendingSelection = selectedWidgetKeys.ToHashSet(StringComparer.Ordinal);
+        pendingQuickLinks = selectedQuickLinkKeys.ToHashSet(StringComparer.Ordinal);
+        showCustomizePanel = true;
+    }
+
+    private void CloseCustomizePanel()
+    {
+        showCustomizePanel = false;
+    }
+
+    private void ToggleWidget(string key, object? isChecked)
+    {
+        var isSelected = isChecked is bool b && b;
+        if (isSelected)
+        {
+            pendingSelection.Add(key);
+        }
+        else
+        {
+            pendingSelection.Remove(key);
+        }
+    }
+
+    private void ToggleQuickLink(string key, object? isChecked)
+    {
+        var isSelected = isChecked is bool b && b;
+        if (isSelected)
+        {
+            pendingQuickLinks.Add(key);
+        }
+        else
+        {
+            pendingQuickLinks.Remove(key);
+        }
+    }
+
+    private async Task SaveCustomizationAsync()
+    {
+        if (currentUserId == Guid.Empty)
+        {
+            showCustomizePanel = false;
+            return;
+        }
+
+        var ordered = selectedWidgetKeys.Where(pendingSelection.Contains).ToList();
+        foreach (var key in pendingSelection.Where(k => !ordered.Contains(k)))
+        {
+            ordered.Add(key);
+        }
+
+        var orderedLinks = selectedQuickLinkKeys.Where(pendingQuickLinks.Contains).ToList();
+        foreach (var key in pendingQuickLinks.Where(k => !orderedLinks.Contains(k)))
+        {
+            orderedLinks.Add(key);
+        }
+
+        await DashboardService.SaveSelectedWidgetKeysAsync(currentUserId, ordered);
+        await DashboardService.SaveSelectedQuickLinkKeysAsync(currentUserId, orderedLinks);
+
+        selectedWidgetKeys = ordered;
+        selectedQuickLinkKeys = orderedLinks;
+        visibleQuickLinks = availableQuickLinks.Where(l => selectedQuickLinkKeys.Contains(l.Key)).ToList();
+        showCustomizePanel = false;
+    }
+
+    private static string GetQuickLinkIconSvg(string key) => key switch
+    {
+        EInvoice.Application.Dashboard.QuickLinks.Users =>
+            "<svg viewBox=\"0 0 16 16\" width=\"18\" height=\"18\" fill=\"currentColor\"><path d=\"M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3Zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z\"/></svg>",
+        EInvoice.Application.Dashboard.QuickLinks.Roles =>
+            "<svg viewBox=\"0 0 16 16\" width=\"18\" height=\"18\" fill=\"currentColor\"><path fill-rule=\"evenodd\" d=\"M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5z\"/></svg>",
+        EInvoice.Application.Dashboard.QuickLinks.Companies =>
+            "<svg viewBox=\"0 0 16 16\" width=\"18\" height=\"18\" fill=\"currentColor\"><path d=\"M4 1a1 1 0 0 0-1 1v13h2v-2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2h2V2a1 1 0 0 0-1-1H4Z\"/></svg>",
+        EInvoice.Application.Dashboard.QuickLinks.Countries =>
+            "<svg viewBox=\"0 0 16 16\" width=\"18\" height=\"18\" fill=\"currentColor\"><path d=\"M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z\"/></svg>",
+        EInvoice.Application.Dashboard.QuickLinks.Cities =>
+            "<svg viewBox=\"0 0 16 16\" width=\"18\" height=\"18\" fill=\"currentColor\"><path d=\"M8 0a5.53 5.53 0 0 0-3.594 1.342c-1.687 1.454-1.859 4.14-.397 5.831L8 13.914l3.99-6.741c1.462-1.691 1.29-4.377-.396-5.831A5.53 5.53 0 0 0 8 0Z\"/></svg>",
+        _ => string.Empty,
+    };
+}

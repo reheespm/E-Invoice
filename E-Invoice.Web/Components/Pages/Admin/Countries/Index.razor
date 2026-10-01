@@ -1,0 +1,95 @@
+@page "/admin/countries"
+@attribute [Authorize(Policy = Permissions.Country.View)]
+@using EInvoice.Application.Countries
+@inject ICountryManagementService CountryService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Countries</PageTitle>
+
+<h1>Countries</h1>
+
+<AuthorizeView Policy="@Permissions.Country.Create" Context="createContext">
+    <Authorized>
+        <a class="btn btn-primary mb-3" href="/admin/countries/create">Add Country</a>
+    </Authorized>
+</AuthorizeView>
+
+@if (statusMessage is not null)
+{
+    <div class="alert @(statusIsError ? "alert-danger" : "alert-success")">@statusMessage</div>
+}
+
+@if (countries is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Cities</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var country in countries)
+            {
+                <tr>
+                    <td>@country.Name</td>
+                    <td>@country.CityCount</td>
+                    <td class="text-nowrap">
+                        <AuthorizeView Policy="@Permissions.Country.Edit" Context="editContext">
+                            <Authorized>
+                                <a class="btn btn-sm btn-outline-primary" href="/admin/countries/edit/@country.Id">Edit</a>
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@Permissions.Country.Delete" Context="deleteContext">
+                            <Authorized>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteAsync(country.Id, country.Name, country.CityCount)">Delete</button>
+                            </Authorized>
+                        </AuthorizeView>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<CountryListItemDto>? countries;
+    private string? statusMessage;
+    private bool statusIsError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCountriesAsync();
+    }
+
+    private async Task LoadCountriesAsync()
+    {
+        countries = await CountryService.GetCountriesAsync();
+    }
+
+    private async Task ConfirmDeleteAsync(Guid countryId, string countryName, int cityCount)
+    {
+        if (cityCount > 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"'{countryName}' cannot be deleted: {cityCount} city record(s) still reference it. Remove or reassign those cities first.");
+            return;
+        }
+
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{countryName}'?");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await CountryService.DeleteCountryAsync(countryId);
+        statusIsError = !result.Succeeded;
+        statusMessage = result.Succeeded ? "Country deleted successfully." : string.Join(" ", result.Errors);
+        await LoadCountriesAsync();
+    }
+}

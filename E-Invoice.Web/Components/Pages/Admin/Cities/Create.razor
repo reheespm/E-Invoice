@@ -1,0 +1,103 @@
+@page "/admin/cities/create"
+@attribute [Authorize(Policy = Permissions.City.Create)]
+@using System.ComponentModel.DataAnnotations
+@using EInvoice.Application.Cities
+@using EInvoice.Application.Countries
+@inject ICityManagementService CityService
+@inject ICountryManagementService CountryService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Add City</PageTitle>
+
+<h1>Add City</h1>
+
+<EditForm Model="model" OnValidSubmit="HandleSubmitAsync" FormName="CreateCity">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger" />
+
+    @if (serverErrors.Count > 0)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in serverErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="mb-3" style="max-width: 400px;">
+        <label class="form-label">Country <span class="text-danger">*</span></label>
+        <InputSelect class="form-select" @bind-Value="model.CountryId">
+            <option value="">-- Select country --</option>
+            @if (availableCountries is not null)
+            {
+                @foreach (var country in availableCountries)
+                {
+                    <option value="@country.Id">@country.Name</option>
+                }
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3" style="max-width: 400px;">
+        <label class="form-label">Name <span class="text-danger">*</span></label>
+        <InputText class="form-control" @bind-Value="model.Name" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a class="btn btn-secondary" href="/admin/cities">Cancel</a>
+</EditForm>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private readonly SaveCityFormModel model = new();
+    private IReadOnlyList<CountryListItemDto>? availableCountries;
+    private List<string> serverErrors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableCountries = await CountryService.GetCountriesAsync();
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        serverErrors.Clear();
+
+        string? performedBy = null;
+        if (AuthStateTask is not null)
+        {
+            var authState = await AuthStateTask;
+            performedBy = authState.User.Identity?.Name;
+        }
+
+        var result = await CityService.CreateCityAsync(new SaveCityDto
+        {
+            Name = model.Name,
+            CountryId = model.CountryId!.Value,
+            PerformedBy = performedBy,
+        });
+
+        if (result.Succeeded)
+        {
+            Nav.NavigateTo("/admin/cities");
+        }
+        else
+        {
+            serverErrors = result.Errors.ToList();
+        }
+    }
+
+    private class SaveCityFormModel
+    {
+        [Required, StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Country is required.")]
+        public Guid? CountryId { get; set; }
+    }
+}

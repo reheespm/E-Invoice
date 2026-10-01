@@ -1,0 +1,108 @@
+@page "/admin/users"
+@attribute [Authorize(Policy = Permissions.User.View)]
+@using EInvoice.Application.Users
+@inject IUserManagementService UserService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Users</PageTitle>
+
+<h1>Users</h1>
+
+<AuthorizeView Policy="@Permissions.User.Create" Context="createContext">
+    <Authorized>
+        <a class="btn btn-primary mb-3" href="/admin/users/create">Create User</a>
+    </Authorized>
+</AuthorizeView>
+
+@if (statusMessage is not null)
+{
+    <div class="alert @(statusIsError ? "alert-danger" : "alert-success")">@statusMessage</div>
+}
+
+@if (users is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>User Name</th>
+                <th>Email</th>
+                <th>Full Name</th>
+                <th>Roles</th>
+                <th>Companies</th>
+                <th>Reported To</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.UserName</td>
+                    <td>@user.Email</td>
+                    <td>@user.FirstName @user.LastName</td>
+                    <td>@string.Join(", ", user.Roles)</td>
+                    <td>@string.Join(", ", user.Companies)</td>
+                    <td>@user.ReportedToUserName</td>
+                    <td>
+                        @if (user.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Deactivated</span>
+                        }
+                        @if (user.IsLockedOut)
+                        {
+                            <span class="badge bg-danger">Locked</span>
+                        }
+                    </td>
+                    <td class="text-nowrap">
+                        <AuthorizeView Policy="@Permissions.User.Edit" Context="editContext">
+                            <Authorized>
+                                <a class="btn btn-sm btn-outline-primary" href="/admin/users/edit/@user.Id">Edit</a>
+                                <button class="btn btn-sm @(user.IsActive ? "btn-outline-warning" : "btn-outline-success")"
+                                        @onclick="() => ToggleActiveAsync(user.Id, !user.IsActive)">
+                                    @(user.IsActive ? "Deactivate" : "Activate")
+                                </button>
+                            </Authorized>
+                        </AuthorizeView>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<UserListItemDto>? users;
+    private string? statusMessage;
+    private bool statusIsError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        users = await UserService.GetUsersAsync();
+    }
+
+    private async Task ToggleActiveAsync(Guid userId, bool activate)
+    {
+        var result = await UserService.SetActiveStatusAsync(userId, activate);
+        statusIsError = !result.Succeeded;
+        statusMessage = result.Succeeded
+            ? $"User {(activate ? "activated" : "deactivated")} successfully."
+            : string.Join(" ", result.Errors);
+
+        await LoadUsersAsync();
+    }
+}

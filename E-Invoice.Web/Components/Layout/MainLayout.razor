@@ -1,0 +1,103 @@
+@inherits LayoutComponentBase
+@using System.Security.Claims
+
+<div class="app-shell">
+    <input type="checkbox" id="sidebar-collapse" class="sidebar-collapse-input" />
+
+    <aside class="sidebar">
+        <NavMenu />
+    </aside>
+
+    <div class="app-main">
+        <header class="app-header">
+            <div class="greeting">
+                <span class="greeting-icon" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" width="22" height="22" fill="currentColor"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0ZM3.732 2.732a.5.5 0 0 1 .707 0l1.414 1.414a.5.5 0 1 1-.707.708L3.732 3.44a.5.5 0 0 1 0-.707ZM0 8a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2A.5.5 0 0 1 0 8Zm13.5 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5Zm-9.768 3.732a.5.5 0 0 1 0 .707l-1.414 1.414a.5.5 0 1 1-.708-.707l1.415-1.414a.5.5 0 0 1 .707 0Zm9.536 0a.5.5 0 0 1 .707 0l1.414 1.414a.5.5 0 0 1-.707.707l-1.414-1.414a.5.5 0 0 1 0-.707ZM8 13.5a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2a.5.5 0 0 1 .5-.5Zm4.268-9.768a.5.5 0 0 1 0-.707l1.414-1.414a.5.5 0 1 1 .708.707l-1.415 1.414a.5.5 0 0 1-.707 0Z"/></svg>
+                </span>
+                <div>
+                    <div class="greeting-title">@GreetingText</div>
+                    <AuthorizeView>
+                        <Authorized>
+                            <div class="greeting-name">@DisplayName(context.User)</div>
+                        </Authorized>
+                    </AuthorizeView>
+                </div>
+            </div>
+
+            <AuthorizeView>
+                <Authorized>
+                    <details class="profile-menu">
+                        <summary class="profile-summary">
+                            <span class="avatar">@Initials(context.User)</span>
+                            <span class="profile-text">
+                                <span class="profile-name">@DisplayName(context.User)</span>
+                                <span class="profile-email">@context.User.Identity?.Name</span>
+                            </span>
+                            <svg class="chevron" viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708Z"/></svg>
+                        </summary>
+                        <div class="profile-dropdown">
+                            <a href="Account/Manage">Manage account</a>
+                            <form action="Account/Logout" method="post" data-enhance="false">
+                                <AntiforgeryToken />
+                                <input type="hidden" name="ReturnUrl" value="" />
+                                <button type="submit">Logout</button>
+                            </form>
+                        </div>
+                    </details>
+                </Authorized>
+            </AuthorizeView>
+        </header>
+
+        <main class="app-content">
+            @Body
+        </main>
+    </div>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    private static string GreetingText
+    {
+        get
+        {
+            var hour = DateTime.Now.Hour;
+            if (hour < 12)
+            {
+                return "Good Morning!";
+            }
+
+            return hour < 17 ? "Good Afternoon!" : "Good Evening!";
+        }
+    }
+
+    private static string DisplayName(ClaimsPrincipal user)
+    {
+        var given = user.FindFirst(ClaimTypes.GivenName)?.Value;
+        var surname = user.FindFirst(ClaimTypes.Surname)?.Value;
+        var fullName = $"{given} {surname}".Trim();
+        return string.IsNullOrWhiteSpace(fullName) ? (user.Identity?.Name ?? string.Empty) : fullName;
+    }
+
+    private static string Initials(ClaimsPrincipal user)
+    {
+        var given = user.FindFirst(ClaimTypes.GivenName)?.Value;
+        var surname = user.FindFirst(ClaimTypes.Surname)?.Value;
+
+        char? first = string.IsNullOrEmpty(given) ? null : given[0];
+        char? last = string.IsNullOrEmpty(surname) ? null : surname[0];
+
+        var initials = $"{first}{last}";
+        if (!string.IsNullOrWhiteSpace(initials))
+        {
+            return initials.ToUpperInvariant();
+        }
+
+        var name = user.Identity?.Name;
+        return string.IsNullOrEmpty(name) ? "?" : name[0].ToString().ToUpperInvariant();
+    }
+}

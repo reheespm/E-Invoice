@@ -1,0 +1,252 @@
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+    background: #eef1f4;
+}
+
+.sidebar-collapse-input {
+    display: none;
+}
+
+.sidebar {
+    width: 17rem;
+    flex-shrink: 0;
+    transition: width 0.2s ease;
+}
+
+.sidebar-collapse-input:checked ~ .sidebar {
+    width: 5.5rem;
+}
+
+.app-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---------- Header ---------- */
+
+.app-header {
+    height: 4.5rem;
+    flex-shrink: 0;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e9ee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.greeting {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #1f2937;
+}
+
+.greeting-icon {
+    color: #f5a623;
+}
+
+.greeting-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.greeting-name {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+/* ---------- Profile menu ---------- */
+
+.profile-menu {
+    position: relative;
+}
+
+.profile-summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.6rem;
+}
+
+.profile-summary::-webkit-details-marker {
+    display: none;
+}
+
+.profile-summary::marker {
+    content: "";
+}
+
+.profile-summary:hover {
+    background: #f3f5f7;
+}
+
+.avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: #0d3b34;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.profile-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    text-align: left;
+}
+
+.profile-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.profile-email {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.chevron {
+    color: #9aa3af;
+}
+
+.profile-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    background: #fff;
+    border: 1px solid #e5e9ee;
+    border-radius: 0.6rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+    min-width: 12rem;
+    padding: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.profile-dropdown a,
+.profile-dropdown button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.4rem;
+    border: none;
+    background: none;
+    color: #1f2937;
+    font-size: 0.9rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.profile-dropdown a:hover,
+.profile-dropdown button:hover {
+    background: #f3f5f7;
+}
+
+/* ---------- Content ---------- */
+
+.app-content {
+    flex: 1;
+    padding: 1.75rem;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+@media (max-width: 900px) {
+    .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 20;
+    }
+
+    .app-main {
+        width: 100%;
+    }
+}
+
+/* ---------- Collapsed (desktop) sidebar state ---------- */
+/* NavMenu's internal elements are reached with ::deep since the
+   collapse checkbox lives here in the parent layout. */
+
+.sidebar-collapse-input:checked ~ .sidebar ::deep .brand-text,
+.sidebar-collapse-input:checked ~ .sidebar ::deep .nav-label,
+.sidebar-collapse-input:checked ~ .sidebar ::deep .version-tag {
+    display: none;
+}
+
+.sidebar-collapse-input:checked ~ .sidebar ::deep .brand-row {
+    justify-content: center;
+}
+
+.sidebar-collapse-input:checked ~ .sidebar ::deep .collapse-toggle {
+    margin-left: 0;
+    position: absolute;
+    right: -0.85rem;
+    top: 1.35rem;
+    background: #0d3b34;
+    box-shadow: 0 0 0 2px #eef1f4;
+}
+
+.sidebar-collapse-input:checked ~ .sidebar ::deep .collapse-toggle svg {
+    transform: rotate(180deg);
+}
+
+.sidebar-collapse-input:checked ~ .sidebar ::deep .nav-item .nav-link {
+    justify-content: center;
+    padding: 0;
+}
+
+.sidebar-collapse-input:checked ~ .sidebar ::deep .nav-icon {
+    margin-right: 0;
+}
+
+.sidebar-collapse-input:checked ~ .sidebar ::deep .nav-group-summary {
+    justify-content: center;
+    padding: 0;
+}
+
+.sidebar-collapse-input:checked ~ .sidebar ::deep .nav-group-chevron,
+.sidebar-collapse-input:checked ~ .sidebar ::deep .nav-group-items {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .sidebar-collapse-input {
+        display: none;
+    }
+}

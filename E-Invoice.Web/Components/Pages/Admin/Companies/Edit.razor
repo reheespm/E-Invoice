@@ -1,0 +1,275 @@
+@page "/admin/companies/edit/{CompanyId:guid}"
+@attribute [Authorize(Policy = Permissions.Company.Edit)]
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using EInvoice.Application.Cities
+@using EInvoice.Application.Companies
+@using EInvoice.Application.Countries
+@inject ICompanyManagementService CompanyService
+@inject ICountryManagementService CountryService
+@inject ICityManagementService CityService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Edit Company</PageTitle>
+
+<h1>Edit Company</h1>
+
+@if (model is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="model" OnValidSubmit="HandleSubmitAsync" FormName="EditCompany">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger" />
+
+        @if (serverErrors.Count > 0)
+        {
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach (var error in serverErrors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <div class="mb-3" style="max-width: 500px;">
+            <label class="form-label">Company Name <span class="text-danger">*</span></label>
+            <InputText class="form-control" @bind-Value="model.Name" />
+        </div>
+
+        <div class="row" style="max-width: 500px;">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Company Code <span class="text-danger">*</span></label>
+                <InputText class="form-control" @bind-Value="model.CompanyCode" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Plant Code</label>
+                <InputText class="form-control" @bind-Value="model.PlantCode" />
+            </div>
+        </div>
+
+        <div class="mb-3" style="max-width: 500px;">
+            <label class="form-label">Address <span class="text-danger">*</span></label>
+            <InputTextArea class="form-control" @bind-Value="model.Address" />
+        </div>
+
+        <div class="mb-3" style="max-width: 500px;">
+            <label class="form-label">Street</label>
+            <InputText class="form-control" @bind-Value="model.Street" />
+        </div>
+
+        <div class="row" style="max-width: 500px;">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Country <span class="text-danger">*</span></label>
+                <InputSelect class="form-select" @bind-Value="model.CountryId" @bind-Value:after="OnCountryChanged">
+                    <option value="">-- Select country --</option>
+                    @if (availableCountries is not null)
+                    {
+                        @foreach (var country in availableCountries)
+                        {
+                            <option value="@country.Id">@country.Name</option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">City <span class="text-danger">*</span></label>
+                <InputSelect class="form-select" @bind-Value="model.CityId" disabled="@(model.CountryId is null)">
+                    <option value="">-- Select city --</option>
+                    @foreach (var city in citiesForSelectedCountry)
+                    {
+                        <option value="@city.Id">@city.Name</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+
+        <div class="row" style="max-width: 500px;">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">PO Box</label>
+                <InputText class="form-control" @bind-Value="model.PoBox" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Phone <span class="text-danger">*</span></label>
+                <InputText class="form-control" @bind-Value="model.Phone" />
+            </div>
+        </div>
+
+        <div class="row" style="max-width: 500px;">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Email</label>
+                <InputText class="form-control" @bind-Value="model.Email" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Website</label>
+                <InputText class="form-control" @bind-Value="model.Website" placeholder="https://example.com" />
+            </div>
+        </div>
+
+        <div class="text-muted small mb-3">
+            Created @createdAtUtc.ToString("g") @(string.IsNullOrWhiteSpace(createdBy) ? "" : $"by {createdBy}")
+            @if (modifiedAtUtc is not null)
+            {
+                <br />
+                @:Last modified @modifiedAtUtc.Value.ToString("g") @(string.IsNullOrWhiteSpace(modifiedBy) ? "" : $"by {modifiedBy}")
+            }
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a class="btn btn-secondary" href="/admin/companies">Cancel</a>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public Guid CompanyId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private SaveCompanyFormModel? model;
+    private List<string> serverErrors = new();
+    private DateTime createdAtUtc;
+    private string? createdBy;
+    private DateTime? modifiedAtUtc;
+    private string? modifiedBy;
+    private IReadOnlyList<CountryListItemDto>? availableCountries;
+    private IReadOnlyList<CityListItemDto> allCities = Array.Empty<CityListItemDto>();
+    private IReadOnlyList<CityListItemDto> citiesForSelectedCountry = Array.Empty<CityListItemDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableCountries = await CountryService.GetCountriesAsync();
+        allCities = await CityService.GetCitiesAsync();
+
+        var company = await CompanyService.GetCompanyByIdAsync(CompanyId);
+        if (company is null)
+        {
+            Nav.NavigateTo("/admin/companies");
+            return;
+        }
+
+        createdAtUtc = company.CreatedAtUtc;
+        createdBy = company.CreatedBy;
+        modifiedAtUtc = company.ModifiedAtUtc;
+        modifiedBy = company.ModifiedBy;
+
+        model = new SaveCompanyFormModel
+        {
+            Name = company.Name,
+            CompanyCode = company.CompanyCode,
+            PlantCode = company.PlantCode,
+            Address = company.Address,
+            Street = company.Street,
+            CityId = company.CityId,
+            CountryId = company.CountryId,
+            PoBox = company.PoBox,
+            Phone = company.Phone,
+            Email = company.Email,
+            Website = company.Website,
+        };
+
+        citiesForSelectedCountry = allCities.Where(c => c.CountryId == company.CountryId).ToList();
+    }
+
+    private void OnCountryChanged()
+    {
+        if (model is null)
+        {
+            return;
+        }
+
+        citiesForSelectedCountry = model.CountryId is null
+            ? Array.Empty<CityListItemDto>()
+            : allCities.Where(c => c.CountryId == model.CountryId).ToList();
+
+        if (model.CityId is not null && citiesForSelectedCountry.All(c => c.Id != model.CityId))
+        {
+            model.CityId = null;
+        }
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        if (model is null)
+        {
+            return;
+        }
+
+        serverErrors.Clear();
+
+        string? performedBy = null;
+        if (AuthStateTask is not null)
+        {
+            var authState = await AuthStateTask;
+            performedBy = authState.User.Identity?.Name;
+        }
+
+        var result = await CompanyService.UpdateCompanyAsync(new SaveCompanyDto
+        {
+            Id = CompanyId,
+            Name = model.Name,
+            CompanyCode = model.CompanyCode,
+            PlantCode = model.PlantCode,
+            Address = model.Address,
+            Street = model.Street,
+            CityId = model.CityId!.Value,
+            CountryId = model.CountryId!.Value,
+            PoBox = model.PoBox,
+            Phone = model.Phone,
+            Email = model.Email,
+            Website = model.Website,
+            PerformedBy = performedBy,
+        });
+
+        if (result.Succeeded)
+        {
+            Nav.NavigateTo("/admin/companies");
+        }
+        else
+        {
+            serverErrors = result.Errors.ToList();
+        }
+    }
+
+    private class SaveCompanyFormModel
+    {
+        [Required, StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required, StringLength(20)]
+        public string CompanyCode { get; set; } = string.Empty;
+
+        [StringLength(20)]
+        public string? PlantCode { get; set; }
+
+        [Required, StringLength(300)]
+        public string Address { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string? Street { get; set; }
+
+        [Required(ErrorMessage = "City is required.")]
+        public Guid? CityId { get; set; }
+
+        [Required(ErrorMessage = "Country is required.")]
+        public Guid? CountryId { get; set; }
+
+        [StringLength(50)]
+        public string? PoBox { get; set; }
+
+        [Required, StringLength(50)]
+        public string Phone { get; set; } = string.Empty;
+
+        [EmailAddress, StringLength(256)]
+        public string? Email { get; set; }
+
+        [StringLength(256)]
+        public string? Website { get; set; }
+    }
+}

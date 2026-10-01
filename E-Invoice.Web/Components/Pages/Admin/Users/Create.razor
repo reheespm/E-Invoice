@@ -1,0 +1,217 @@
+@page "/admin/users/create"
+@attribute [Authorize(Policy = Permissions.User.Create)]
+@using System.ComponentModel.DataAnnotations
+@using EInvoice.Application.Companies
+@using EInvoice.Application.Roles
+@using EInvoice.Application.Users
+@inject IUserManagementService UserService
+@inject IRoleManagementService RoleService
+@inject ICompanyManagementService CompanyService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Create User</PageTitle>
+
+<h1>Create User</h1>
+
+<EditForm Model="model" OnValidSubmit="HandleSubmitAsync" FormName="CreateUser">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger" />
+
+    @if (serverErrors.Count > 0)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in serverErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">First Name <span class="text-danger">*</span></label>
+            <InputText class="form-control" @bind-Value="model.FirstName" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+            <InputText class="form-control" @bind-Value="model.LastName" />
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Username <span class="text-danger">*</span></label>
+        <InputText class="form-control" @bind-Value="model.UserName" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Email <span class="text-danger">*</span></label>
+        <InputText class="form-control" type="email" @bind-Value="model.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password <span class="text-danger">*</span></label>
+        <InputText class="form-control" type="password" @bind-Value="model.Password" />
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">SAP ID</label>
+            <InputText class="form-control" @bind-Value="model.SapId" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Poornata ID</label>
+            <InputText class="form-control" @bind-Value="model.PoornataId" />
+        </div>
+    </div>
+
+    <div class="mb-3" style="max-width: 400px;">
+        <label class="form-label">Reported To</label>
+        <InputSelect class="form-select" @bind-Value="model.ReportedToUserId">
+            <option value="">-- None --</option>
+            @if (availableUsers is not null)
+            {
+                @foreach (var user in availableUsers)
+                {
+                    <option value="@user.Id">@user.FirstName @user.LastName (@user.UserName)</option>
+                }
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label d-block">Roles</label>
+        @if (availableRoles is not null)
+        {
+            @foreach (var role in availableRoles)
+            {
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="role-@role.Id"
+                           checked="@model.Roles.Contains(role.Name)"
+                           @onchange="e => ToggleRole(role.Name, e.Value)" />
+                    <label class="form-check-label" for="role-@role.Id">@role.Name</label>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label d-block">Companies</label>
+        @if (availableCompanies is not null)
+        {
+            @foreach (var company in availableCompanies)
+            {
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="company-@company.Id"
+                           checked="@model.CompanyIds.Contains(company.Id)"
+                           @onchange="e => ToggleCompany(company.Id, e.Value)" />
+                    <label class="form-check-label" for="company-@company.Id">@company.Name</label>
+                </div>
+            }
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a class="btn btn-secondary" href="/admin/users">Cancel</a>
+</EditForm>
+
+@code {
+    private readonly CreateUserFormModel model = new();
+    private IReadOnlyList<RoleListItemDto>? availableRoles;
+    private IReadOnlyList<CompanyListItemDto>? availableCompanies;
+    private IReadOnlyList<UserListItemDto>? availableUsers;
+    private List<string> serverErrors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableRoles = await RoleService.GetRolesAsync();
+        availableCompanies = await CompanyService.GetCompaniesAsync();
+        availableUsers = await UserService.GetUsersAsync();
+    }
+
+    private void ToggleRole(string roleName, object? isChecked)
+    {
+        var isSelected = isChecked is bool b && b;
+        if (isSelected && !model.Roles.Contains(roleName))
+        {
+            model.Roles.Add(roleName);
+        }
+        else if (!isSelected)
+        {
+            model.Roles.Remove(roleName);
+        }
+    }
+
+    private void ToggleCompany(Guid companyId, object? isChecked)
+    {
+        var isSelected = isChecked is bool b && b;
+        if (isSelected && !model.CompanyIds.Contains(companyId))
+        {
+            model.CompanyIds.Add(companyId);
+        }
+        else if (!isSelected)
+        {
+            model.CompanyIds.Remove(companyId);
+        }
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        serverErrors.Clear();
+
+        var result = await UserService.CreateUserAsync(new CreateUserDto
+        {
+            FirstName = model.FirstName,
+            LastName = model.LastName,
+            UserName = model.UserName,
+            Email = model.Email,
+            Password = model.Password,
+            Roles = model.Roles,
+            CompanyIds = model.CompanyIds,
+            SapId = model.SapId,
+            PoornataId = model.PoornataId,
+            ReportedToUserId = model.ReportedToUserId,
+        });
+
+        if (result.Succeeded)
+        {
+            Nav.NavigateTo("/admin/users");
+        }
+        else
+        {
+            serverErrors = result.Errors.ToList();
+        }
+    }
+
+    private class CreateUserFormModel
+    {
+        [Required, StringLength(100)]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required, StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required, StringLength(256)]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required, StringLength(100, MinimumLength = 8)]
+        public string Password { get; set; } = string.Empty;
+
+        public List<string> Roles { get; set; } = new();
+
+        public List<Guid> CompanyIds { get; set; } = new();
+
+        [StringLength(50)]
+        public string? SapId { get; set; }
+
+        [StringLength(50)]
+        public string? PoornataId { get; set; }
+
+        public Guid? ReportedToUserId { get; set; }
+    }
+}

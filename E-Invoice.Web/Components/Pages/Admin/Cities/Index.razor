@@ -1,0 +1,95 @@
+@page "/admin/cities"
+@attribute [Authorize(Policy = Permissions.City.View)]
+@using EInvoice.Application.Cities
+@inject ICityManagementService CityService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Cities</PageTitle>
+
+<h1>Cities</h1>
+
+<AuthorizeView Policy="@Permissions.City.Create" Context="createContext">
+    <Authorized>
+        <a class="btn btn-primary mb-3" href="/admin/cities/create">Add City</a>
+    </Authorized>
+</AuthorizeView>
+
+@if (statusMessage is not null)
+{
+    <div class="alert @(statusIsError ? "alert-danger" : "alert-success")">@statusMessage</div>
+}
+
+@if (cities is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Country</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var city in cities)
+            {
+                <tr>
+                    <td>@city.Name</td>
+                    <td>@city.CountryName</td>
+                    <td class="text-nowrap">
+                        <AuthorizeView Policy="@Permissions.City.Edit" Context="editContext">
+                            <Authorized>
+                                <a class="btn btn-sm btn-outline-primary" href="/admin/cities/edit/@city.Id">Edit</a>
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@Permissions.City.Delete" Context="deleteContext">
+                            <Authorized>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteAsync(city.Id, city.Name, city.AssignedCompanyCount)">Delete</button>
+                            </Authorized>
+                        </AuthorizeView>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<CityListItemDto>? cities;
+    private string? statusMessage;
+    private bool statusIsError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCitiesAsync();
+    }
+
+    private async Task LoadCitiesAsync()
+    {
+        cities = await CityService.GetCitiesAsync();
+    }
+
+    private async Task ConfirmDeleteAsync(Guid cityId, string cityName, int assignedCompanyCount)
+    {
+        if (assignedCompanyCount > 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"'{cityName}' cannot be deleted: {assignedCompanyCount} company record(s) still reference it. Reassign those companies first.");
+            return;
+        }
+
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{cityName}'?");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await CityService.DeleteCityAsync(cityId);
+        statusIsError = !result.Succeeded;
+        statusMessage = result.Succeeded ? "City deleted successfully." : string.Join(" ", result.Errors);
+        await LoadCitiesAsync();
+    }
+}

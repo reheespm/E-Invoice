@@ -1,0 +1,139 @@
+<div class="sidebar-inner">
+    <div class="brand-row">
+        <span class="brand-badge">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none"><path d="M12 3 3 8v8l9 5 9-5V8l-9-5Z" stroke="#0d3b34" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="11" r="2.6" fill="#0d3b34"/></svg>
+        </span>
+        <span class="brand-text">E-Invoice</span>
+
+        <label for="sidebar-collapse" class="collapse-toggle" aria-label="Collapse sidebar">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0Z"/></svg>
+        </label>
+    </div>
+
+    <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+    <nav class="nav-scrollable flex-column">
+        <AuthorizeView Policy="@Permissions.Dashboard.View" Context="dashboardContext">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="nav-icon" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5Z"/></svg>
+                        </span>
+                        <span class="nav-label">Dashboard</span>
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Context="userSettingsContext">
+            <Authorized>
+                @if (CanViewUsers(userSettingsContext.User) || CanViewRoles(userSettingsContext.User) || CanViewCompanies(userSettingsContext.User) || CanViewCountries(userSettingsContext.User) || CanViewCities(userSettingsContext.User))
+                {
+                    <details class="nav-group" open>
+                        <summary class="nav-group-summary">
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492ZM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0Z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.901 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.901-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319Zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319Z"/></svg>
+                            </span>
+                            <span class="nav-label">Settings</span>
+                            <svg class="nav-group-chevron" viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708Z"/></svg>
+                        </summary>
+                        <div class="nav-group-items">
+                            @if (CanViewUsers(userSettingsContext.User))
+                            {
+                                <div class="nav-item px-3">
+                                    <NavLink class="nav-link nav-link-sub" href="admin/users">
+                                        <span class="nav-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3Zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>
+                                        </span>
+                                        <span class="nav-label">Users</span>
+                                    </NavLink>
+                                </div>
+                            }
+                            @if (CanViewRoles(userSettingsContext.User))
+                            {
+                                <div class="nav-item px-3">
+                                    <NavLink class="nav-link nav-link-sub" href="admin/roles">
+                                        <span class="nav-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5z"/></svg>
+                                        </span>
+                                        <span class="nav-label">Roles</span>
+                                    </NavLink>
+                                </div>
+                            }
+                            @if (CanViewCompanies(userSettingsContext.User))
+                            {
+                                <div class="nav-item px-3">
+                                    <NavLink class="nav-link nav-link-sub" href="admin/companies">
+                                        <span class="nav-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M4 1a1 1 0 0 0-1 1v13h2v-2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2h2V2a1 1 0 0 0-1-1H4Zm1 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1A.5.5 0 0 1 5 4Zm3.5-.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1ZM5 7a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1A.5.5 0 0 1 5 7Zm3.5-.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1ZM5 10a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1A.5.5 0 0 1 5 10Zm3.5-.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1Z"/><path d="M0 14.5A.5.5 0 0 1 .5 14H1V3a1 1 0 0 1 1-1h1V1a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v11h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5ZM3 3v11h1V3H3Zm10 11V4h-1v10h1Z"/></svg>
+                                        </span>
+                                        <span class="nav-label">Company</span>
+                                    </NavLink>
+                                </div>
+                            }
+                            @if (CanViewCountries(userSettingsContext.User))
+                            {
+                                <div class="nav-item px-3">
+                                    <NavLink class="nav-link nav-link-sub" href="admin/countries">
+                                        <span class="nav-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm7.5-6.923c-.67.204-1.335.82-1.887 1.855A8 8 0 0 0 5.145 4H7.5V1.077ZM4.09 4a9.3 9.3 0 0 1 .64-1.539 6.7 6.7 0 0 1 .597-.933A7.03 7.03 0 0 0 2.255 4H4.09Zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a6.96 6.96 0 0 0-.656 2.5h2.49ZM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5H4.847ZM8.5 5v2.5h2.99a12.5 12.5 0 0 0-.337-2.5H8.5ZM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5H4.51Zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5H8.5ZM5.145 12c.138.386.295.744.468 1.068.552 1.035 1.218 1.65 1.887 1.855V12H5.145Zm.182 2.472a6.7 6.7 0 0 1-.597-.933A9.3 9.3 0 0 1 4.09 12H2.255a7.03 7.03 0 0 0 3.072 2.472ZM3.82 11a13.7 13.7 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5H3.82Zm6.853 3.472A7.03 7.03 0 0 0 13.745 12H11.91a9.3 9.3 0 0 1-.64 1.539 6.7 6.7 0 0 1-.597.933ZM8.5 12v2.923c.67-.204 1.335-.82 1.887-1.855.173-.324.33-.682.468-1.068H8.5Zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.7 13.7 0 0 1-.312 2.5Zm2.802-3.5a6.96 6.96 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5h2.49ZM11.27 2.461c.247.464.462.98.64 1.539h1.835a7.03 7.03 0 0 0-3.072-2.472c.218.284.418.598.597.933ZM10.855 4a8 8 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4h2.355Z"/></svg>
+                                        </span>
+                                        <span class="nav-label">Country</span>
+                                    </NavLink>
+                                </div>
+                            }
+                            @if (CanViewCities(userSettingsContext.User))
+                            {
+                                <div class="nav-item px-3">
+                                    <NavLink class="nav-link nav-link-sub" href="admin/cities">
+                                        <span class="nav-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/><path d="M8 0a5.53 5.53 0 0 0-3.594 1.342c-1.687 1.454-1.859 4.14-.397 5.831L8 13.914l3.99-6.741c1.462-1.691 1.29-4.377-.396-5.831A5.53 5.53 0 0 0 8 0Zm0 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></svg>
+                                        </span>
+                                        <span class="nav-label">City</span>
+                                    </NavLink>
+                                </div>
+                            }
+                        </div>
+                    </details>
+                }
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Account/Login">
+                        <span class="nav-icon" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/><path d="M4.5 0A2.5 2.5 0 0 0 2 2.5V14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2.5A2.5 2.5 0 0 0 11.5 0h-7zM3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5v10.795a4.2 4.2 0 0 0-.776-.492C11.392 12.387 10.063 12 8 12s-3.392.387-4.224.803a4.2 4.2 0 0 0-.776.492V2.5z"/></svg>
+                        </span>
+                        <span class="nav-label">Login</span>
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </nav>
+
+    <div class="sidebar-footer">
+        <span class="version-tag">v1.0.0</span>
+    </div>
+</div>
+
+@code {
+    private static bool CanViewUsers(System.Security.Claims.ClaimsPrincipal user) =>
+        user.HasClaim(EInvoice.Infrastructure.Authorization.PermissionClaimTypes.Permission, Permissions.User.View);
+
+    private static bool CanViewRoles(System.Security.Claims.ClaimsPrincipal user) =>
+        user.HasClaim(EInvoice.Infrastructure.Authorization.PermissionClaimTypes.Permission, Permissions.Role.View);
+
+    private static bool CanViewCompanies(System.Security.Claims.ClaimsPrincipal user) =>
+        user.HasClaim(EInvoice.Infrastructure.Authorization.PermissionClaimTypes.Permission, Permissions.Company.View);
+
+
+
+    private static bool CanViewCountries(System.Security.Claims.ClaimsPrincipal user) =>
+        user.HasClaim(EInvoice.Infrastructure.Authorization.PermissionClaimTypes.Permission, Permissions.Country.View);
+
+    private static bool CanViewCities(System.Security.Claims.ClaimsPrincipal user) =>
+        user.HasClaim(EInvoice.Infrastructure.Authorization.PermissionClaimTypes.Permission, Permissions.City.View);
+}

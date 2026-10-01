@@ -1,0 +1,77 @@
+@page "/admin/countries/create"
+@attribute [Authorize(Policy = Permissions.Country.Create)]
+@using System.ComponentModel.DataAnnotations
+@using EInvoice.Application.Countries
+@inject ICountryManagementService CountryService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Add Country</PageTitle>
+
+<h1>Add Country</h1>
+
+<EditForm Model="model" OnValidSubmit="HandleSubmitAsync" FormName="CreateCountry">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger" />
+
+    @if (serverErrors.Count > 0)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in serverErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="mb-3" style="max-width: 400px;">
+        <label class="form-label">Name <span class="text-danger">*</span></label>
+        <InputText class="form-control" @bind-Value="model.Name" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a class="btn btn-secondary" href="/admin/countries">Cancel</a>
+</EditForm>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private readonly SaveCountryFormModel model = new();
+    private List<string> serverErrors = new();
+
+    private async Task HandleSubmitAsync()
+    {
+        serverErrors.Clear();
+
+        string? performedBy = null;
+        if (AuthStateTask is not null)
+        {
+            var authState = await AuthStateTask;
+            performedBy = authState.User.Identity?.Name;
+        }
+
+        var result = await CountryService.CreateCountryAsync(new SaveCountryDto
+        {
+            Name = model.Name,
+            PerformedBy = performedBy,
+        });
+
+        if (result.Succeeded)
+        {
+            Nav.NavigateTo("/admin/countries");
+        }
+        else
+        {
+            serverErrors = result.Errors.ToList();
+        }
+    }
+
+    private class SaveCountryFormModel
+    {
+        [Required, StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+.git/
+_to_delete/
+_archive/
+*.md

@@ -1,0 +1,104 @@
+@page "/admin/roles"
+@attribute [Authorize(Policy = Permissions.Role.View)]
+@using EInvoice.Application.Roles
+@inject IRoleManagementService RoleService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Roles</PageTitle>
+
+<h1>Roles</h1>
+
+<AuthorizeView Policy="@Permissions.Role.Create" Context="createContext">
+    <Authorized>
+        <a class="btn btn-primary mb-3" href="/admin/roles/create">Create Role</a>
+    </Authorized>
+</AuthorizeView>
+
+@if (statusMessage is not null)
+{
+    <div class="alert @(statusIsError ? "alert-danger" : "alert-success")">@statusMessage</div>
+}
+
+@if (roles is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Users</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var role in roles)
+            {
+                <tr>
+                    <td>
+                        @role.Name
+                        @if (role.IsSystemRole)
+                        {
+                            <span class="badge bg-info text-dark">Built-in</span>
+                        }
+                    </td>
+                    <td>@role.Description</td>
+                    <td>@role.UserCount</td>
+                    <td class="text-nowrap">
+                        <AuthorizeView Policy="@Permissions.Role.Edit" Context="editContext">
+                            <Authorized>
+                                <a class="btn btn-sm btn-outline-primary" href="/admin/roles/edit/@role.Id">Edit</a>
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@Permissions.Role.Delete" Context="deleteContext">
+                            <Authorized>
+                                @if (!role.IsSystemRole)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteAsync(role.Id, role.Name, role.UserCount)">Delete</button>
+                                }
+                            </Authorized>
+                        </AuthorizeView>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<RoleListItemDto>? roles;
+    private string? statusMessage;
+    private bool statusIsError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRolesAsync();
+    }
+
+    private async Task LoadRolesAsync()
+    {
+        roles = await RoleService.GetRolesAsync();
+    }
+
+    private async Task ConfirmDeleteAsync(Guid roleId, string roleName, int userCount)
+    {
+        var message = userCount > 0
+            ? $"'{roleName}' is currently assigned to {userCount} user(s). Deleting it will remove the role from those users. Do you want to continue?"
+            : $"Are you sure you want to delete '{roleName}'?";
+
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", message);
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await RoleService.DeleteRoleAsync(roleId);
+        statusIsError = !result.Succeeded;
+        statusMessage = result.Succeeded ? "Role deleted successfully." : string.Join(" ", result.Errors);
+        await LoadRolesAsync();
+    }
+}

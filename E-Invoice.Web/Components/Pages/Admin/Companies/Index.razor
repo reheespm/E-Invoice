@@ -1,0 +1,122 @@
+@page "/admin/companies"
+@attribute [Authorize(Policy = Permissions.Company.View)]
+@using EInvoice.Application.Companies
+@inject ICompanyManagementService CompanyService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Companies</PageTitle>
+
+<h1>Companies</h1>
+
+<AuthorizeView Policy="@Permissions.Company.Create" Context="createContext">
+    <Authorized>
+        <a class="btn btn-primary mb-3" href="/admin/companies/create">Add Company</a>
+    </Authorized>
+</AuthorizeView>
+
+@if (statusMessage is not null)
+{
+    <div class="alert @(statusIsError ? "alert-danger" : "alert-success")">@statusMessage</div>
+}
+
+@if (companies is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Company Code</th>
+                <th>Plant Code</th>
+                <th>City</th>
+                <th>Country</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Created</th>
+                <th>Modified</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var company in companies)
+            {
+                <tr>
+                    <td>@company.Name</td>
+                    <td>@company.CompanyCode</td>
+                    <td>@company.PlantCode</td>
+                    <td>@company.City</td>
+                    <td>@company.Country</td>
+                    <td>@company.Phone</td>
+                    <td>@company.Email</td>
+                    <td>
+                        @company.CreatedAtUtc.ToString("g")
+                        @if (!string.IsNullOrWhiteSpace(company.CreatedBy))
+                        {
+                            <div class="text-muted small">by @company.CreatedBy</div>
+                        }
+                    </td>
+                    <td>
+                        @if (company.ModifiedAtUtc is not null)
+                        {
+                            @company.ModifiedAtUtc.Value.ToString("g")
+                            @if (!string.IsNullOrWhiteSpace(company.ModifiedBy))
+                            {
+                                <div class="text-muted small">by @company.ModifiedBy</div>
+                            }
+                        }
+                    </td>
+                    <td class="text-nowrap">
+                        <AuthorizeView Policy="@Permissions.Company.Edit" Context="editContext">
+                            <Authorized>
+                                <a class="btn btn-sm btn-outline-primary" href="/admin/companies/edit/@company.Id">Edit</a>
+                            </Authorized>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@Permissions.Company.Delete" Context="deleteContext">
+                            <Authorized>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteAsync(company.Id, company.Name, company.AssignedUserCount)">Delete</button>
+                            </Authorized>
+                        </AuthorizeView>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<CompanyListItemDto>? companies;
+    private string? statusMessage;
+    private bool statusIsError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCompaniesAsync();
+    }
+
+    private async Task LoadCompaniesAsync()
+    {
+        companies = await CompanyService.GetCompaniesAsync();
+    }
+
+    private async Task ConfirmDeleteAsync(Guid companyId, string companyName, int assignedUserCount)
+    {
+        var message = assignedUserCount > 0
+            ? $"'{companyName}' is currently assigned to {assignedUserCount} user(s). Deleting it will remove those assignments. Do you want to continue?"
+            : $"Are you sure you want to delete '{companyName}'?";
+
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", message);
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await CompanyService.DeleteCompanyAsync(companyId);
+        statusIsError = !result.Succeeded;
+        statusMessage = result.Succeeded ? "Company deleted successfully." : string.Join(" ", result.Errors);
+        await LoadCompaniesAsync();
+    }
+}

@@ -1,0 +1,293 @@
+@page "/admin/users/edit/{UserId:guid}"
+@attribute [Authorize(Policy = Permissions.User.Edit)]
+@using System.ComponentModel.DataAnnotations
+@using EInvoice.Application.Companies
+@using EInvoice.Application.Roles
+@using EInvoice.Application.Users
+@inject IUserManagementService UserService
+@inject IRoleManagementService RoleService
+@inject ICompanyManagementService CompanyService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Edit User</PageTitle>
+
+<h1>Edit User</h1>
+
+@if (model is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="model" OnValidSubmit="HandleSubmitAsync" FormName="EditUser">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger" />
+
+        @if (serverErrors.Count > 0)
+        {
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach (var error in serverErrors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                <InputText class="form-control" @bind-Value="model.FirstName" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                <InputText class="form-control" @bind-Value="model.LastName" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email <span class="text-danger">*</span></label>
+            <InputText class="form-control" type="email" @bind-Value="model.Email" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Phone Number</label>
+            <InputText class="form-control" @bind-Value="model.PhoneNumber" />
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">SAP ID</label>
+                <InputText class="form-control" @bind-Value="model.SapId" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Poornata ID</label>
+                <InputText class="form-control" @bind-Value="model.PoornataId" />
+            </div>
+        </div>
+
+        <div class="mb-3" style="max-width: 400px;">
+            <label class="form-label">Reported To</label>
+            <InputSelect class="form-select" @bind-Value="model.ReportedToUserId">
+                <option value="">-- None --</option>
+                @if (availableUsers is not null)
+                {
+                    @foreach (var user in availableUsers)
+                    {
+                        <option value="@user.Id">@user.FirstName @user.LastName (@user.UserName)</option>
+                    }
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label d-block">Roles</label>
+            @if (availableRoles is not null)
+            {
+                @foreach (var role in availableRoles)
+                {
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="role-@role.Id"
+                               checked="@model.Roles.Contains(role.Name)"
+                               @onchange="e => ToggleRole(role.Name, e.Value)" />
+                        <label class="form-check-label" for="role-@role.Id">@role.Name</label>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label d-block">Companies</label>
+            @if (availableCompanies is not null)
+            {
+                @foreach (var company in availableCompanies)
+                {
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="company-@company.Id"
+                               checked="@model.CompanyIds.Contains(company.Id)"
+                               @onchange="e => ToggleCompany(company.Id, e.Value)" />
+                        <label class="form-check-label" for="company-@company.Id">@company.Name</label>
+                    </div>
+                }
+            }
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a class="btn btn-secondary" href="/admin/users">Cancel</a>
+    </EditForm>
+
+    <hr class="my-4" />
+
+    <h5>Reset Password</h5>
+    <EditForm Model="resetPasswordModel" OnValidSubmit="HandleResetPasswordAsync" FormName="ResetPassword">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger" />
+
+        @if (resetPasswordMessage is not null)
+        {
+            <div class="alert @(resetPasswordIsError ? "alert-danger" : "alert-success")">@resetPasswordMessage</div>
+        }
+
+        <div class="mb-3" style="max-width: 400px;">
+            <label class="form-label">New Password <span class="text-danger">*</span></label>
+            <InputText class="form-control" type="password" @bind-Value="resetPasswordModel.NewPassword" />
+        </div>
+
+        <button type="submit" class="btn btn-outline-warning">Reset Password</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public Guid UserId { get; set; }
+
+    private EditUserFormModel? model;
+    private IReadOnlyList<RoleListItemDto>? availableRoles;
+    private IReadOnlyList<CompanyListItemDto>? availableCompanies;
+    private IReadOnlyList<UserListItemDto>? availableUsers;
+    private List<string> serverErrors = new();
+
+    private readonly ResetPasswordFormModel resetPasswordModel = new();
+    private string? resetPasswordMessage;
+    private bool resetPasswordIsError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableRoles = await RoleService.GetRolesAsync();
+        availableCompanies = await CompanyService.GetCompaniesAsync();
+
+        var user = await UserService.GetUserByIdAsync(UserId);
+        if (user is null)
+        {
+            Nav.NavigateTo("/admin/users");
+            return;
+        }
+
+        availableUsers = (await UserService.GetUsersAsync()).Where(u => u.Id != UserId).ToList();
+
+        model = new EditUserFormModel
+        {
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            Roles = user.Roles.ToList(),
+            CompanyIds = user.CompanyIds.ToList(),
+            SapId = user.SapId,
+            PoornataId = user.PoornataId,
+            ReportedToUserId = user.ReportedToUserId,
+        };
+    }
+
+    private void ToggleRole(string roleName, object? isChecked)
+    {
+        if (model is null)
+        {
+            return;
+        }
+
+        var isSelected = isChecked is bool b && b;
+        if (isSelected && !model.Roles.Contains(roleName))
+        {
+            model.Roles.Add(roleName);
+        }
+        else if (!isSelected)
+        {
+            model.Roles.Remove(roleName);
+        }
+    }
+
+    private void ToggleCompany(Guid companyId, object? isChecked)
+    {
+        if (model is null)
+        {
+            return;
+        }
+
+        var isSelected = isChecked is bool b && b;
+        if (isSelected && !model.CompanyIds.Contains(companyId))
+        {
+            model.CompanyIds.Add(companyId);
+        }
+        else if (!isSelected)
+        {
+            model.CompanyIds.Remove(companyId);
+        }
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        if (model is null)
+        {
+            return;
+        }
+
+        serverErrors.Clear();
+
+        var result = await UserService.UpdateUserAsync(new UpdateUserDto
+        {
+            Id = UserId,
+            FirstName = model.FirstName,
+            LastName = model.LastName,
+            Email = model.Email,
+            PhoneNumber = model.PhoneNumber,
+            Roles = model.Roles,
+            CompanyIds = model.CompanyIds,
+            SapId = model.SapId,
+            PoornataId = model.PoornataId,
+            ReportedToUserId = model.ReportedToUserId,
+        });
+
+        if (result.Succeeded)
+        {
+            Nav.NavigateTo("/admin/users");
+        }
+        else
+        {
+            serverErrors = result.Errors.ToList();
+        }
+    }
+
+    private async Task HandleResetPasswordAsync()
+    {
+        var result = await UserService.ResetPasswordAsync(UserId, resetPasswordModel.NewPassword);
+        resetPasswordIsError = !result.Succeeded;
+        resetPasswordMessage = result.Succeeded
+            ? "Password reset successfully."
+            : string.Join(" ", result.Errors);
+    }
+
+    private class EditUserFormModel
+    {
+        [Required, StringLength(100)]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required, StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        public string? PhoneNumber { get; set; }
+
+        public List<string> Roles { get; set; } = new();
+
+        public List<Guid> CompanyIds { get; set; } = new();
+
+        [StringLength(50)]
+        public string? SapId { get; set; }
+
+        [StringLength(50)]
+        public string? PoornataId { get; set; }
+
+        public Guid? ReportedToUserId { get; set; }
+    }
+
+    private class ResetPasswordFormModel
+    {
+        [Required, StringLength(100, MinimumLength = 8)]
+        public string NewPassword { get; set; } = string.Empty;
+    }
+}

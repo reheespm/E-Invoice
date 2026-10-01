@@ -1,0 +1,248 @@
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    flex-wrap: wrap;
+    background: #f4f6f8;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* ---------- Left hero panel ---------- */
+
+.login-hero {
+    position: relative;
+    flex: 1 1 52%;
+    min-height: 420px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem 3.5rem;
+    color: #fff;
+    background: radial-gradient(120% 140% at 15% 20%, #123b30 0%, #06120f 45%, #000000 100%);
+}
+
+.login-hero-glow {
+    position: absolute;
+    inset: -20% -10% auto -20%;
+    height: 140%;
+    background: radial-gradient(circle at 20% 15%, rgba(46, 204, 133, 0.35), transparent 55%);
+    pointer-events: none;
+}
+
+.login-hero-rings {
+    position: absolute;
+    right: 8%;
+    bottom: -8%;
+    width: 30rem;
+    height: 30rem;
+    pointer-events: none;
+}
+
+.login-hero-rings .ring {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 50%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.ring-1 { width: 10rem; height: 10rem; }
+.ring-2 { width: 16rem; height: 16rem; }
+.ring-3 { width: 22rem; height: 22rem; }
+.ring-4 { width: 28rem; height: 28rem; }
+
+.login-hero-rings .hub {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 50%;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 2.5rem rgba(46, 204, 133, 0.55);
+}
+
+.login-hero-rings .badge {
+    position: absolute;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+.badge-1 { left: 6%; top: 18%; }
+.badge-2 { left: 84%; top: 10%; }
+.badge-3 { left: 2%; top: 68%; }
+.badge-4 { left: 90%; top: 72%; }
+
+.login-hero-copy {
+    position: relative;
+    z-index: 1;
+    max-width: 26rem;
+}
+
+.login-hero-copy h2 {
+    font-size: 1.85rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 0.75rem;
+    letter-spacing: 0.01em;
+}
+
+.login-hero-copy .lead {
+    font-size: 1.25rem;
+    color: #d7ede4;
+    margin: 0 0 0.75rem;
+}
+
+.login-hero-copy .sub {
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ---------- Right form panel ---------- */
+
+.login-form-panel {
+    flex: 1 1 40%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    padding: 3rem 2rem;
+}
+
+.login-form-inner {
+    width: 100%;
+    max-width: 24rem;
+}
+
+.login-form-inner h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 1.75rem;
+}
+
+.field-group {
+    margin-bottom: 1.25rem;
+}
+
+.field-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.4rem;
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.field-icon {
+    position: absolute;
+    left: 0.9rem;
+    color: #9aa3af;
+    pointer-events: none;
+}
+
+.input-with-icon ::deep .form-control {
+    width: 100%;
+    padding: 0.65rem 2.75rem;
+    border: 1px solid #d7dbe0;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.input-with-icon ::deep .form-control:focus {
+    outline: none;
+    border-color: #1b6ec2;
+    box-shadow: 0 0 0 0.15rem rgba(27, 110, 194, 0.2);
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    border: none;
+    background: none;
+    color: #9aa3af;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+}
+
+.password-toggle .icon-eye-slash {
+    display: none;
+}
+
+.password-toggle.is-visible .icon-eye {
+    display: none;
+}
+
+.password-toggle.is-visible .icon-eye-slash {
+    display: block;
+}
+
+.field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #374151;
+    margin: 0;
+}
+
+.forgot-link {
+    font-size: 0.9rem;
+}
+
+.btn-signin {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: #1b6ec2;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-signin:hover {
+    background: #1861ac;
+}
+
+.resend-link {
+    text-align: center;
+    margin-top: 1.25rem;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 900px) {
+    .login-hero {
+        min-height: 260px;
+        padding: 2rem;
+    }
+
+    .login-hero-rings {
+        display: none;
+    }
+}

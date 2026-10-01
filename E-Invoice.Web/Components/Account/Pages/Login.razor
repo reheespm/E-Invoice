@@ -1,0 +1,159 @@
+@page "/Account/Login"
+@layout EInvoice.Web.Components.Layout.BlankLayout
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using EInvoice.Infrastructure.Identity
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject ILogger<Login> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Log in - E-Invoice</PageTitle>
+
+<div class="login-page">
+    <div class="login-hero">
+        <div class="login-hero-glow"></div>
+        <div class="login-hero-rings" aria-hidden="true">
+            <span class="ring ring-1"></span>
+            <span class="ring ring-2"></span>
+            <span class="ring ring-3"></span>
+            <span class="ring ring-4"></span>
+            <span class="hub">
+                <svg viewBox="0 0 24 24" width="34" height="34" fill="none"><path d="M12 3 3 8v8l9 5 9-5V8l-9-5Z" stroke="#0d3b34" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="11" r="2.6" fill="#0d3b34"/></svg>
+            </span>
+            <span class="badge badge-1"><svg viewBox="0 0 16 16" width="16" height="16" fill="white"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4Z"/></svg></span>
+            <span class="badge badge-2"><svg viewBox="0 0 16 16" width="16" height="16" fill="white"><path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.069l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73z"/></svg></span>
+            <span class="badge badge-3"><svg viewBox="0 0 16 16" width="16" height="16" fill="white"><path d="M13.5 1a1.5 1.5 0 0 1 1.5 1.5v13a.5.5 0 0 1-.777.416L10 13.101l-4.223 2.815A.5.5 0 0 1 5 15.5v-13A1.5 1.5 0 0 1 6.5 1h7z"/></svg></span>
+            <span class="badge badge-4"><svg viewBox="0 0 16 16" width="16" height="16" fill="white"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16Zm.5-11.5v3.793l2.354 2.353-.708.708L7.5 8.707V4.5h1Z"/></svg></span>
+        </div>
+
+        <div class="login-hero-copy">
+            <h2>Visual Integrated Business System</h2>
+            <p class="lead">All-in-one workspace</p>
+            <p class="sub">Manage users, roles and permissions for your organization from a single, secure place.</p>
+        </div>
+    </div>
+
+    <div class="login-form-panel">
+        <div class="login-form-inner">
+            <h1>Login</h1>
+
+            <StatusMessage Message="@errorMessage" />
+
+            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" role="alert" />
+
+                <div class="field-group">
+                    <label for="username-input">Enter your email or user ID <span class="text-danger">*</span></label>
+                    <div class="input-with-icon">
+                        <svg class="field-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.383L8 9.583l-1.326-.707-5.64 3.383A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/></svg>
+                        <InputText id="username-input" @bind-Value="Input.UserNameOrEmail" class="form-control" autocomplete="username" aria-required="true" placeholder="Email or User ID" />
+                    </div>
+                    <ValidationMessage For="() => Input.UserNameOrEmail" class="text-danger" />
+                </div>
+
+                <div class="field-group">
+                    <label for="password-input">Enter your password <span class="text-danger">*</span></label>
+                    <div class="input-with-icon">
+                        <svg class="field-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2Zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/></svg>
+                        <InputText type="password" id="password-input" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Password" />
+                        <button type="button" class="password-toggle" aria-label="Show or hide password"
+                                onclick="var i=document.getElementById('password-input');var showing=i.type==='text';i.type=showing?'password':'text';this.classList.toggle('is-visible', !showing);">
+                            <svg class="icon-eye" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8ZM1.173 8a13.1 13.1 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.1 13.1 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.1 13.1 0 0 1 1.172 8Z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/></svg>
+                            <svg class="icon-eye-slash" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7 7 0 0 0-1.652.196l1.22 1.22C7.888 3.635 7.947 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.1 13.1 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.518.487l.708.708ZM11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822Zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829Z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.1 13.1 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.85.85A6.6 6.6 0 0 1 8 13.5c-5 0-8-5.5-8-5.5s.939-1.721 2.641-3.238l.709.709Z"/><path d="M13.646 14.354a.5.5 0 0 0 .708-.708l-12-12a.5.5 0 0 0-.708.708l12 12Z"/></svg>
+                        </button>
+                    </div>
+                    <ValidationMessage For="() => Input.Password" class="text-danger" />
+                </div>
+
+                <div class="field-row">
+                    <label class="remember-me">
+                        <InputCheckbox @bind-Value="Input.RememberMe" />
+                        Remember Me
+                    </label>
+                    <a href="Account/ForgotPassword" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-signin">Sign in</button>
+
+                <p class="resend-link">
+                    <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
+                </p>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? errorMessage;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        }
+    }
+
+    public async Task LoginUser()
+    {
+        var user = await UserManager.FindByNameAsync(Input.UserNameOrEmail)
+            ?? await UserManager.FindByEmailAsync(Input.UserNameOrEmail);
+
+        if (user is null)
+        {
+            errorMessage = "Error: Invalid login attempt.";
+            return;
+        }
+
+        var result = await SignInManager.PasswordSignInAsync(user, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+        if (result.Succeeded)
+        {
+            Logger.LogInformation("User logged in.");
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+        else if (result.RequiresTwoFactor)
+        {
+            RedirectManager.RedirectTo(
+                "Account/LoginWith2fa",
+                new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
+        }
+        else if (result.IsLockedOut)
+        {
+            Logger.LogWarning("User account locked out.");
+            RedirectManager.RedirectTo("Account/Lockout");
+        }
+        else
+        {
+            errorMessage = "Error: Invalid login attempt.";
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        public string UserNameOrEmail { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [Display(Name = "Remember me?")]
+        public bool RememberMe { get; set; }
+    }
+}
