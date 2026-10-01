@@ -11,16 +11,12 @@ public class UserListItemDto
     public bool IsLockedOut { get; set; }
     public IReadOnlyList<string> Roles { get; set; } = Array.Empty<string>();
     public IReadOnlyList<string> Companies { get; set; } = Array.Empty<string>();
-    public string? ReportedToUserName { get; set; }
 }
 
 public class UserDetailDto : UserListItemDto
 {
     public string? PhoneNumber { get; set; }
     public IReadOnlyList<Guid> CompanyIds { get; set; } = Array.Empty<Guid>();
-    public string? SapId { get; set; }
-    public string? PoornataId { get; set; }
-    public Guid? ReportedToUserId { get; set; }
 }
 
 public class CreateUserDto
@@ -32,9 +28,6 @@ public class CreateUserDto
     public string Password { get; set; } = string.Empty;
     public List<string> Roles { get; set; } = new();
     public List<Guid> CompanyIds { get; set; } = new();
-    public string? SapId { get; set; }
-    public string? PoornataId { get; set; }
-    public Guid? ReportedToUserId { get; set; }
 }
 
 public class UpdateUserDto
@@ -46,7 +39,4 @@ public class UpdateUserDto
     public string? PhoneNumber { get; set; }
     public List<string> Roles { get; set; } = new();
     public List<Guid> CompanyIds { get; set; } = new();
-    public string? SapId { get; set; }
-    public string? PoornataId { get; set; }
-    public Guid? ReportedToUserId { get; set; }
 }

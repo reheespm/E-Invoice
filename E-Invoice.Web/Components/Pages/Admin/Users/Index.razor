@@ -34,7 +34,6 @@ else
                 <th>Full Name</th>
                 <th>Roles</th>
                 <th>Companies</th>
-                <th>Reported To</th>
                 <th>Status</th>
                 <th></th>
             </tr>
@@ -48,7 +47,6 @@ else
                     <td>@user.FirstName @user.LastName</td>
                     <td>@string.Join(", ", user.Roles)</td>
                     <td>@string.Join(", ", user.Companies)</td>
-                    <td>@user.ReportedToUserName</td>
                     <td>
                         @if (user.IsActive)
                         {

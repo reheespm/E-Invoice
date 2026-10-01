@@ -8,10 +8,6 @@ public class Company : AuditableEntity
 
     public string Name { get; set; } = string.Empty;
 
-    public string CompanyCode { get; set; } = string.Empty;
-
-    public string? PlantCode { get; set; }
-
     public string Address { get; set; } = string.Empty;
 
     public string? Street { get; set; }

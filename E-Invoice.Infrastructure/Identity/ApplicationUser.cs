@@ -10,12 +10,6 @@ public class ApplicationUser : IdentityUser<Guid>
 
     public bool IsActive { get; set; } = true;
 
-    public string? SapId { get; set; }
-
-    public string? PoornataId { get; set; }
-
-    public Guid? ReportedToUserId { get; set; }
-
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public string FullName => $"{FirstName} {LastName}".Trim();

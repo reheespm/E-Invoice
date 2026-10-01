@@ -4,8 +4,6 @@ public class CompanyListItemDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string CompanyCode { get; set; } = string.Empty;
-    public string? PlantCode { get; set; }
     public string City { get; set; } = string.Empty;
     public string Country { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
@@ -21,8 +19,6 @@ public class CompanyDetailDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string CompanyCode { get; set; } = string.Empty;
-    public string? PlantCode { get; set; }
     public string Address { get; set; } = string.Empty;
     public string? Street { get; set; }
     public Guid CityId { get; set; }
@@ -43,8 +39,6 @@ public class SaveCompanyDto
 {
     public Guid? Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string CompanyCode { get; set; } = string.Empty;
-    public string? PlantCode { get; set; }
     public string Address { get; set; } = string.Empty;
     public string? Street { get; set; }
     public Guid CityId { get; set; }

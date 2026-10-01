@@ -47,8 +47,6 @@ public class EInvoiceDbContext : IdentityDbContext<
         {
             entity.ToTable("Companies");
             entity.Property(c => c.Name).HasMaxLength(200).IsRequired();
-            entity.Property(c => c.CompanyCode).HasMaxLength(20).IsRequired();
-            entity.Property(c => c.PlantCode).HasMaxLength(20);
             entity.Property(c => c.Address).HasMaxLength(300).IsRequired();
             entity.Property(c => c.Street).HasMaxLength(200);
             entity.Property(c => c.PoBox).HasMaxLength(50);
@@ -59,7 +57,6 @@ public class EInvoiceDbContext : IdentityDbContext<
             entity.Property(c => c.ModifiedBy).HasMaxLength(256);
             entity.HasOne<City>().WithMany().HasForeignKey(c => c.CityId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Country>().WithMany().HasForeignKey(c => c.CountryId).OnDelete(DeleteBehavior.Restrict);
-            entity.HasIndex(c => c.PlantCode).IsUnique().HasFilter("[PlantCode] IS NOT NULL");
         });
 
         builder.Entity<Country>(entity =>
@@ -85,10 +82,7 @@ public class EInvoiceDbContext : IdentityDbContext<
         {
             entity.Property(u => u.FirstName).HasMaxLength(100);
             entity.Property(u => u.LastName).HasMaxLength(100);
-            entity.Property(u => u.SapId).HasMaxLength(50);
-            entity.Property(u => u.PoornataId).HasMaxLength(50);
             entity.ToTable("Users");
-            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(u => u.ReportedToUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<ApplicationRole>(entity =>

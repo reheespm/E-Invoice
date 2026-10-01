@@ -56,31 +56,6 @@
         <InputText class="form-control" type="password" @bind-Value="model.Password" />
     </div>
 
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <label class="form-label">SAP ID</label>
-            <InputText class="form-control" @bind-Value="model.SapId" />
-        </div>
-        <div class="col-md-6">
-            <label class="form-label">Poornata ID</label>
-            <InputText class="form-control" @bind-Value="model.PoornataId" />
-        </div>
-    </div>
-
-    <div class="mb-3" style="max-width: 400px;">
-        <label class="form-label">Reported To</label>
-        <InputSelect class="form-select" @bind-Value="model.ReportedToUserId">
-            <option value="">-- None --</option>
-            @if (availableUsers is not null)
-            {
-                @foreach (var user in availableUsers)
-                {
-                    <option value="@user.Id">@user.FirstName @user.LastName (@user.UserName)</option>
-                }
-            }
-        </InputSelect>
-    </div>
-
     <div class="mb-3">
         <label class="form-label d-block">Roles</label>
         @if (availableRoles is not null)
@@ -170,9 +145,6 @@
             Password = model.Password,
             Roles = model.Roles,
             CompanyIds = model.CompanyIds,
-            SapId = model.SapId,
-            PoornataId = model.PoornataId,
-            ReportedToUserId = model.ReportedToUserId,
         });
 
         if (result.Succeeded)
@@ -205,13 +177,5 @@
         public List<string> Roles { get; set; } = new();
 
         public List<Guid> CompanyIds { get; set; } = new();
-
-        [StringLength(50)]
-        public string? SapId { get; set; }
-
-        [StringLength(50)]
-        public string? PoornataId { get; set; }
-
-        public Guid? ReportedToUserId { get; set; }
     }
 }

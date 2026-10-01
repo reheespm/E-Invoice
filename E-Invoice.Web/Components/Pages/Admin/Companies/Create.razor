@@ -36,17 +36,6 @@
         <InputText class="form-control" @bind-Value="model.Name" />
     </div>
 
-    <div class="row" style="max-width: 500px;">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Company Code <span class="text-danger">*</span></label>
-            <InputText class="form-control" @bind-Value="model.CompanyCode" />
-        </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Plant Code</label>
-            <InputText class="form-control" @bind-Value="model.PlantCode" />
-        </div>
-    </div>
-
     <div class="mb-3" style="max-width: 500px;">
         <label class="form-label">Address <span class="text-danger">*</span></label>
         <InputTextArea class="form-control" @bind-Value="model.Address" />
@@ -151,8 +140,6 @@
         var result = await CompanyService.CreateCompanyAsync(new SaveCompanyDto
         {
             Name = model.Name,
-            CompanyCode = model.CompanyCode,
-            PlantCode = model.PlantCode,
             Address = model.Address,
             Street = model.Street,
             CityId = model.CityId!.Value,
@@ -178,12 +165,6 @@
     {
         [Required, StringLength(200)]
         public string Name { get; set; } = string.Empty;
-
-        [Required, StringLength(20)]
-        public string CompanyCode { get; set; } = string.Empty;
-
-        [StringLength(20)]
-        public string? PlantCode { get; set; }
 
         [Required, StringLength(300)]
         public string Address { get; set; } = string.Empty;

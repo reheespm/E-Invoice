@@ -50,13 +50,6 @@ public class UserManagementService : IUserManagementService
             .Select(c => c.Name)
             .ToListAsync();
 
-        var reportedToUserName = user.ReportedToUserId is null
-            ? null
-            : await _userManager.Users
-                .Where(u => u.Id == user.ReportedToUserId)
-                .Select(u => u.UserName)
-                .FirstOrDefaultAsync();
-
         return new UserDetailDto
         {
             Id = user.Id,
@@ -70,20 +63,11 @@ public class UserManagementService : IUserManagementService
             Roles = roles.ToList(),
             Companies = companyNames,
             CompanyIds = companyIds,
-            SapId = user.SapId,
-            PoornataId = user.PoornataId,
-            ReportedToUserId = user.ReportedToUserId,
-            ReportedToUserName = reportedToUserName,
         };
     }
 
     public async Task<ServiceResult<Guid>> CreateUserAsync(CreateUserDto dto)
     {
-        if (dto.ReportedToUserId is not null && !await _userManager.Users.AnyAsync(u => u.Id == dto.ReportedToUserId))
-        {
-            return ServiceResult<Guid>.Failure("Selected 'Reported To' user does not exist.");
-        }
-
         var user = new ApplicationUser
         {
             UserName = dto.UserName,
@@ -92,9 +76,6 @@ public class UserManagementService : IUserManagementService
             LastName = dto.LastName,
             IsActive = true,
             EmailConfirmed = true,
-            SapId = dto.SapId,
-            PoornataId = dto.PoornataId,
-            ReportedToUserId = dto.ReportedToUserId,
         };
 
         var createResult = await _userManager.CreateAsync(user, dto.Password);
@@ -133,24 +114,11 @@ public class UserManagementService : IUserManagementService
             return ServiceResult.Failure("User not found.");
         }
 
-        if (dto.ReportedToUserId == dto.Id)
-        {
-            return ServiceResult.Failure("A user cannot report to themselves.");
-        }
-
-        if (dto.ReportedToUserId is not null && !await _userManager.Users.AnyAsync(u => u.Id == dto.ReportedToUserId))
-        {
-            return ServiceResult.Failure("Selected 'Reported To' user does not exist.");
-        }
-
         user.FirstName = dto.FirstName;
         user.LastName = dto.LastName;
         user.Email = dto.Email;
         user.NormalizedEmail = dto.Email.ToUpperInvariant();
         user.PhoneNumber = dto.PhoneNumber;
-        user.SapId = dto.SapId;
-        user.PoornataId = dto.PoornataId;
-        user.ReportedToUserId = dto.ReportedToUserId;
 
         var updateResult = await _userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
@@ -258,13 +226,6 @@ public class UserManagementService : IUserManagementService
             .OrderBy(name => name)
             .ToListAsync();
 
-        var reportedToUserName = user.ReportedToUserId is null
-            ? null
-            : await _userManager.Users
-                .Where(u => u.Id == user.ReportedToUserId)
-                .Select(u => u.UserName)
-                .FirstOrDefaultAsync();
-
         return new UserListItemDto
         {
             Id = user.Id,
@@ -276,7 +237,6 @@ public class UserManagementService : IUserManagementService
             IsLockedOut = await _userManager.IsLockedOutAsync(user),
             Roles = roles.ToList(),
             Companies = companyNames,
-            ReportedToUserName = reportedToUserName,
         };
     }
 }

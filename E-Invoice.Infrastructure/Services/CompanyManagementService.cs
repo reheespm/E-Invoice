@@ -23,8 +23,6 @@ public class CompanyManagementService : ICompanyManagementService
             {
                 Id = c.Id,
                 Name = c.Name,
-                CompanyCode = c.CompanyCode,
-                PlantCode = c.PlantCode,
                 City = _dbContext.Cities.Where(city => city.Id == c.CityId).Select(city => city.Name).FirstOrDefault() ?? string.Empty,
                 Country = _dbContext.Countries.Where(co => co.Id == c.CountryId).Select(co => co.Name).FirstOrDefault() ?? string.Empty,
                 Phone = c.Phone,
@@ -53,8 +51,6 @@ public class CompanyManagementService : ICompanyManagementService
         {
             Id = company.Id,
             Name = company.Name,
-            CompanyCode = company.CompanyCode,
-            PlantCode = company.PlantCode,
             Address = company.Address,
             Street = company.Street,
             CityId = company.CityId,
@@ -80,17 +76,10 @@ public class CompanyManagementService : ICompanyManagementService
             return ServiceResult<Guid>.Failure(validationError);
         }
 
-        if (!string.IsNullOrWhiteSpace(dto.PlantCode) && await _dbContext.Companies.AnyAsync(c => c.PlantCode == dto.PlantCode))
-        {
-            return ServiceResult<Guid>.Failure("A company with this Plant Code already exists.");
-        }
-
         var company = new Company
         {
             Id = Guid.NewGuid(),
             Name = dto.Name,
-            CompanyCode = dto.CompanyCode,
-            PlantCode = dto.PlantCode,
             Address = dto.Address,
             Street = dto.Street,
             CityId = dto.CityId,
@@ -128,15 +117,7 @@ public class CompanyManagementService : ICompanyManagementService
             return ServiceResult.Failure(validationError);
         }
 
-        if (!string.IsNullOrWhiteSpace(dto.PlantCode) &&
-            await _dbContext.Companies.AnyAsync(c => c.PlantCode == dto.PlantCode && c.Id != dto.Id.Value))
-        {
-            return ServiceResult.Failure("A company with this Plant Code already exists.");
-        }
-
         company.Name = dto.Name;
-        company.CompanyCode = dto.CompanyCode;
-        company.PlantCode = dto.PlantCode;
         company.Address = dto.Address;
         company.Street = dto.Street;
         company.CityId = dto.CityId;
