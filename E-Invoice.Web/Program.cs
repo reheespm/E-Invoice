@@ -10,6 +10,14 @@ using EInvoice.Web.Components.Account;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
+{
+    // Avoid starting multiple local debug sessions on the same port by default.
+    // If an explicit URL is supplied (for example by launchSettings or environment variables),
+    // we honor it; otherwise Kestrel will bind to an available ephemeral port.
+    builder.WebHost.UseUrls("http://127.0.0.1:0");
+}
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
