@@ -38,6 +38,14 @@ public static class Permissions
         public const string Delete = "Company.Delete";
     }
 
+    public static class Customer
+    {
+        public const string View = "Customer.View";
+        public const string Create = "Customer.Create";
+        public const string Edit = "Customer.Edit";
+        public const string Delete = "Customer.Delete";
+    }
+
     public static class Country
     {
         public const string View = "Country.View";
