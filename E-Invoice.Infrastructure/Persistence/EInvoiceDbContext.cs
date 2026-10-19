@@ -23,6 +23,8 @@ public class EInvoiceDbContext : IdentityDbContext<
 
     public DbSet<Company> Companies => Set<Company>();
 
+    public DbSet<Customer> Customers => Set<Customer>();
+
     public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
 
     public DbSet<Country> Countries => Set<Country>();
@@ -55,6 +57,26 @@ public class EInvoiceDbContext : IdentityDbContext<
             entity.Property(c => c.Website).HasMaxLength(256);
             entity.Property(c => c.CreatedBy).HasMaxLength(256);
             entity.Property(c => c.ModifiedBy).HasMaxLength(256);
+            entity.HasOne<City>().WithMany().HasForeignKey(c => c.CityId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Country>().WithMany().HasForeignKey(c => c.CountryId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Customer>(entity =>
+        {
+            entity.ToTable("Customers");
+            entity.Property(c => c.Name).HasMaxLength(200).IsRequired();
+            entity.Property(c => c.Address1).HasMaxLength(300).IsRequired();
+            entity.Property(c => c.Street).HasMaxLength(200);
+            entity.Property(c => c.PostBox).HasMaxLength(50);
+            entity.Property(c => c.Trn).HasMaxLength(50);
+            entity.Property(c => c.Tin).HasMaxLength(50);
+            entity.Property(c => c.PeppolId).HasMaxLength(200);
+            entity.Property(c => c.Phone).HasMaxLength(50).IsRequired();
+            entity.Property(c => c.Email).HasMaxLength(256);
+            entity.Property(c => c.Website).HasMaxLength(256);
+            entity.Property(c => c.CreatedBy).HasMaxLength(256);
+            entity.Property(c => c.ModifiedBy).HasMaxLength(256);
+            entity.HasOne<Company>().WithMany().HasForeignKey(c => c.CompanyId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<City>().WithMany().HasForeignKey(c => c.CityId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Country>().WithMany().HasForeignKey(c => c.CountryId).OnDelete(DeleteBehavior.Restrict);
         });

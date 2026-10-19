@@ -1,6 +1,7 @@
 using EInvoice.Application.Cities;
 using EInvoice.Application.Companies;
 using EInvoice.Application.Countries;
+using EInvoice.Application.Customers;
 using EInvoice.Application.Dashboard;
 using EInvoice.Application.Roles;
 using EInvoice.Application.Users;
@@ -60,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<IRoleManagementService, RoleManagementService>();
         services.AddScoped<ICompanyManagementService, CompanyManagementService>();
+        services.AddScoped<ICustomerManagementService, CustomerManagementService>();
         services.AddScoped<ICountryManagementService, CountryManagementService>();
         services.AddScoped<ICityManagementService, CityManagementService>();
         services.AddScoped<IDashboardService, DashboardService>();
