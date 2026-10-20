@@ -72,7 +72,7 @@ else
                         </AuthorizeView>
                         <AuthorizeView Policy="@Permissions.Company.Delete" Context="deleteContext">
                             <Authorized>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteAsync(company.Id, company.Name, company.AssignedUserCount)">Delete</button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteAsync(company.Id, company.Name)">Delete</button>
                             </Authorized>
                         </AuthorizeView>
                     </td>
@@ -97,13 +97,9 @@ else
         companies = await CompanyService.GetCompaniesAsync();
     }
 
-    private async Task ConfirmDeleteAsync(Guid companyId, string companyName, int assignedUserCount)
+    private async Task ConfirmDeleteAsync(Guid companyId, string companyName)
     {
-        var message = assignedUserCount > 0
-            ? $"'{companyName}' is currently assigned to {assignedUserCount} user(s). Deleting it will remove those assignments. Do you want to continue?"
-            : $"Are you sure you want to delete '{companyName}'?";
-
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", message);
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{companyName}'?");
         if (!confirmed)
         {
             return;

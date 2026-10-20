@@ -57,7 +57,7 @@ else
                             <Authorized>
                                 @if (!role.IsSystemRole)
                                 {
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteAsync(role.Id, role.Name, role.UserCount)">Delete</button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteAsync(role.Id, role.Name)">Delete</button>
                                 }
                             </Authorized>
                         </AuthorizeView>
@@ -83,13 +83,9 @@ else
         roles = await RoleService.GetRolesAsync();
     }
 
-    private async Task ConfirmDeleteAsync(Guid roleId, string roleName, int userCount)
+    private async Task ConfirmDeleteAsync(Guid roleId, string roleName)
     {
-        var message = userCount > 0
-            ? $"'{roleName}' is currently assigned to {userCount} user(s). Deleting it will remove the role from those users. Do you want to continue?"
-            : $"Are you sure you want to delete '{roleName}'?";
-
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", message);
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{roleName}'?");
         if (!confirmed)
         {
             return;

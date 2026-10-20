@@ -572,7 +572,7 @@ namespace EInvoice.Infrastructure.Persistence.Migrations
                     b.HasOne("EInvoice.Domain.Entities.Company", null)
                         .WithMany()
                         .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("EInvoice.Infrastructure.Identity.ApplicationUser", null)
@@ -632,7 +632,7 @@ namespace EInvoice.Infrastructure.Persistence.Migrations
                     b.HasOne("EInvoice.Infrastructure.Identity.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("EInvoice.Infrastructure.Identity.ApplicationUser", null)

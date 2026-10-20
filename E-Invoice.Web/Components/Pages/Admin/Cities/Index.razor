@@ -47,7 +47,7 @@ else
                         </AuthorizeView>
                         <AuthorizeView Policy="@Permissions.City.Delete" Context="deleteContext">
                             <Authorized>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteAsync(city.Id, city.Name, city.AssignedCompanyCount)">Delete</button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDeleteAsync(city.Id, city.Name)">Delete</button>
                             </Authorized>
                         </AuthorizeView>
                     </td>
@@ -72,14 +72,8 @@ else
         cities = await CityService.GetCitiesAsync();
     }
 
-    private async Task ConfirmDeleteAsync(Guid cityId, string cityName, int assignedCompanyCount)
+    private async Task ConfirmDeleteAsync(Guid cityId, string cityName)
     {
-        if (assignedCompanyCount > 0)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", $"'{cityName}' cannot be deleted: {assignedCompanyCount} company record(s) still reference it. Reassign those companies first.");
-            return;
-        }
-
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{cityName}'?");
         if (!confirmed)
         {

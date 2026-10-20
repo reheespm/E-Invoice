@@ -114,16 +114,7 @@ public class CityManagementService : ICityManagementService
             return ServiceResult.Failure("City not found.");
         }
 
-        var companyCount = await _dbContext.Companies.CountAsync(c => c.CityId == id);
-        if (companyCount > 0)
-        {
-            return ServiceResult.Failure($"Cannot delete '{city.Name}': {companyCount} company record(s) still reference it.");
-        }
-
-        _dbContext.Cities.Remove(city);
-        await _dbContext.SaveChangesAsync();
-
-        return ServiceResult.Success();
+        return await DeleteGuard.DeleteAsync(_dbContext, city, id, city.Name);
     }
 
     private async Task<IReadOnlyList<CityListItemDto>> MapListAsync(IQueryable<City> query)

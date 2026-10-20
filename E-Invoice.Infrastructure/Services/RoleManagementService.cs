@@ -5,6 +5,7 @@ using EInvoice.Application.Roles;
 using EInvoice.Domain.Authorization;
 using EInvoice.Infrastructure.Authorization;
 using EInvoice.Infrastructure.Identity;
+using EInvoice.Infrastructure.Persistence;
 
 namespace EInvoice.Infrastructure.Services;
 
@@ -12,11 +13,13 @@ public class RoleManagementService : IRoleManagementService
 {
     private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly EInvoiceDbContext _dbContext;
 
-    public RoleManagementService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager)
+    public RoleManagementService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, EInvoiceDbContext dbContext)
     {
         _roleManager = roleManager;
         _userManager = userManager;
+        _dbContext = dbContext;
     }
 
     public async Task<IReadOnlyList<RoleListItemDto>> GetRolesAsync()
@@ -126,14 +129,10 @@ public class RoleManagementService : IRoleManagementService
             return ServiceResult.Failure("Built-in roles cannot be deleted.");
         }
 
-        var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
-        foreach (var user in usersInRole)
+        var blocked = await DeleteGuard.FindReferencesAsync<ApplicationRole>(_dbContext, role.Id, role.Name!);
+        if (blocked is not null)
         {
-            var removeResult = await _userManager.RemoveFromRoleAsync(user, role.Name!);
-            if (!removeResult.Succeeded)
-            {
-                return ServiceResult.Failure(removeResult.Errors.Select(e => e.Description));
-            }
+            return ServiceResult.Failure(blocked);
         }
 
         var result = await _roleManager.DeleteAsync(role);
