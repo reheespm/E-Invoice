@@ -11,9 +11,11 @@ namespace EInvoice.Infrastructure.Persistence;
 /// </summary>
 public static class DeleteGuard
 {
-    // Friendly names for referencing tables; anything not listed falls back to the table name.
+    // Friendly names for referencing tables ("Table" or, when a table references the same record twice, "Table.Column");
+    // anything not listed falls back to the table name.
     private static readonly Dictionary<string, (string One, string Many)> Labels = new()
     {
+        ["Companies.BankCountryId"] = ("company bank account", "company bank accounts"),
         ["Companies"] = ("company", "companies"),
         ["Customers"] = ("customer", "customers"),
         ["Cities"] = ("city", "cities"),
@@ -40,7 +42,10 @@ public static class DeleteGuard
             if (count > 0)
             {
                 var table = foreignKey.DeclaringEntityType.GetTableName() ?? foreignKey.DeclaringEntityType.ClrType.Name;
-                var (one, many) = Labels.TryGetValue(table, out var label) ? label : (table, table);
+                var (one, many) = Labels.TryGetValue($"{table}.{foreignKey.Properties.Single().Name}", out var label)
+                    || Labels.TryGetValue(table, out label)
+                    ? label
+                    : (table, table);
                 usages.Add($"{count} {(count == 1 ? one : many)}");
             }
         }

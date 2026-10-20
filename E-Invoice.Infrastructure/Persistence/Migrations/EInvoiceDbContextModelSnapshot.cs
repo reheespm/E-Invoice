@@ -69,8 +69,35 @@ namespace EInvoice.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<string>("BankAccountHolderName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("BankAccountNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("BankCountryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BankCurrency")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("BankName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<Guid>("CityId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("ContactPersonName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ContactPersonPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<Guid>("CountryId")
                         .HasColumnType("uuid");
@@ -86,6 +113,17 @@ namespace EInvoice.Infrastructure.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("Iban")
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
+                    b.Property<byte[]>("LogoContent")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("LogoContentType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -95,6 +133,10 @@ namespace EInvoice.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PeppolParticipantId")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
@@ -111,11 +153,25 @@ namespace EInvoice.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("SwiftCode")
+                        .HasMaxLength(11)
+                        .HasColumnType("character varying(11)");
+
+                    b.Property<string>("Tin")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Trn")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
                     b.Property<string>("Website")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BankCountryId");
 
                     b.HasIndex("CityId");
 
@@ -534,6 +590,11 @@ namespace EInvoice.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("EInvoice.Domain.Entities.Company", b =>
                 {
+                    b.HasOne("EInvoice.Domain.Entities.Country", null)
+                        .WithMany()
+                        .HasForeignKey("BankCountryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("EInvoice.Domain.Entities.City", null)
                         .WithMany()
                         .HasForeignKey("CityId")
