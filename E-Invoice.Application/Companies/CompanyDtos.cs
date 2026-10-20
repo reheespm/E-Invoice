@@ -29,6 +29,21 @@ public class CompanyDetailDto
     public string Phone { get; set; } = string.Empty;
     public string? Email { get; set; }
     public string? Website { get; set; }
+    public string? ContactPersonName { get; set; }
+    public string? ContactPersonPhone { get; set; }
+    public string? Trn { get; set; }
+    public string? PeppolParticipantId { get; set; }
+    public string? Tin { get; set; }
+    public string? BankAccountHolderName { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? Iban { get; set; }
+    public string? SwiftCode { get; set; }
+    public Guid? BankCountryId { get; set; }
+    public string? BankCurrency { get; set; }
+    public string? BankCountry { get; set; }
+    public byte[]? LogoContent { get; set; }
+    public string? LogoContentType { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public string? CreatedBy { get; set; }
     public DateTime? ModifiedAtUtc { get; set; }
@@ -47,6 +62,23 @@ public class SaveCompanyDto
     public string Phone { get; set; } = string.Empty;
     public string? Email { get; set; }
     public string? Website { get; set; }
+    public string? ContactPersonName { get; set; }
+    public string? ContactPersonPhone { get; set; }
+    public string? Trn { get; set; }
+    public string? PeppolParticipantId { get; set; }
+    public string? Tin { get; set; }
+    public string? BankAccountHolderName { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? Iban { get; set; }
+    public string? SwiftCode { get; set; }
+    public Guid? BankCountryId { get; set; }
+    public string? BankCurrency { get; set; }
+
+    /// <summary>New logo image bytes; null keeps the current logo unless <see cref="RemoveLogo"/> is set.</summary>
+    public byte[]? LogoContent { get; set; }
+
+    public bool RemoveLogo { get; set; }
 
     /// <summary>Identity name of the signed-in user performing the create/update, supplied by the caller.</summary>
     public string? PerformedBy { get; set; }

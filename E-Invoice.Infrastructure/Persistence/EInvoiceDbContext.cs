@@ -55,10 +55,23 @@ public class EInvoiceDbContext : IdentityDbContext<
             entity.Property(c => c.Phone).HasMaxLength(50).IsRequired();
             entity.Property(c => c.Email).HasMaxLength(256);
             entity.Property(c => c.Website).HasMaxLength(256);
+            entity.Property(c => c.LogoContentType).HasMaxLength(50);
+            entity.Property(c => c.ContactPersonName).HasMaxLength(200);
+            entity.Property(c => c.ContactPersonPhone).HasMaxLength(50);
+            entity.Property(c => c.Trn).HasMaxLength(15);
+            entity.Property(c => c.PeppolParticipantId).HasMaxLength(200);
+            entity.Property(c => c.Tin).HasMaxLength(50);
+            entity.Property(c => c.BankAccountHolderName).HasMaxLength(200);
+            entity.Property(c => c.BankName).HasMaxLength(200);
+            entity.Property(c => c.BankAccountNumber).HasMaxLength(50);
+            entity.Property(c => c.Iban).HasMaxLength(34);
+            entity.Property(c => c.SwiftCode).HasMaxLength(11);
+            entity.Property(c => c.BankCurrency).HasMaxLength(3);
             entity.Property(c => c.CreatedBy).HasMaxLength(256);
             entity.Property(c => c.ModifiedBy).HasMaxLength(256);
             entity.HasOne<City>().WithMany().HasForeignKey(c => c.CityId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Country>().WithMany().HasForeignKey(c => c.CountryId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Country>().WithMany().HasForeignKey(c => c.BankCountryId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<Customer>(entity =>

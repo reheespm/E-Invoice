@@ -1,0 +1,238 @@
+@* Fields of the Add / Edit company form. Must be placed inside an EditForm whose model is the same CompanyFormModel. *@
+@using EInvoice.Application.Cities
+@using EInvoice.Application.Common
+@using EInvoice.Application.Companies
+@using EInvoice.Application.Countries
+
+<h5 class="mt-2 mb-3">Company</h5>
+
+<div class="mb-3" style="max-width: 700px;">
+    <label class="form-label">Company Name <span class="text-danger">*</span></label>
+    <InputText class="form-control" @bind-Value="Model.Name" />
+</div>
+
+<div class="mb-3" style="max-width: 700px;">
+    <label class="form-label">Address <span class="text-danger">*</span></label>
+    <InputTextArea class="form-control" @bind-Value="Model.Address" />
+</div>
+
+<div class="mb-3" style="max-width: 700px;">
+    <label class="form-label">Street</label>
+    <InputText class="form-control" @bind-Value="Model.Street" />
+</div>
+
+<div class="row" style="max-width: 700px;">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Country <span class="text-danger">*</span></label>
+        <InputSelect class="form-select" @bind-Value="Model.CountryId" @bind-Value:after="OnCountryChanged">
+            <option value="">-- Select country --</option>
+            @foreach (var country in Countries)
+            {
+                <option value="@country.Id">@country.Name</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">City <span class="text-danger">*</span></label>
+        <InputSelect class="form-select" @bind-Value="Model.CityId" disabled="@(Model.CountryId is null)">
+            <option value="">-- Select city --</option>
+            @foreach (var city in CitiesForSelectedCountry)
+            {
+                <option value="@city.Id">@city.Name</option>
+            }
+        </InputSelect>
+    </div>
+</div>
+
+<div class="row" style="max-width: 700px;">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">PO Box</label>
+        <InputText class="form-control" @bind-Value="Model.PoBox" />
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Phone <span class="text-danger">*</span></label>
+        <InputText class="form-control" @bind-Value="Model.Phone" />
+    </div>
+</div>
+
+<div class="row" style="max-width: 700px;">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Email</label>
+        <InputText class="form-control" @bind-Value="Model.Email" />
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Website</label>
+        <InputText class="form-control" @bind-Value="Model.Website" placeholder="https://example.com" />
+    </div>
+</div>
+
+<h5 class="mt-4 mb-3">Logo</h5>
+
+<div class="mb-3 d-flex align-items-center gap-3" style="max-width: 700px;">
+    <div class="border rounded d-flex align-items-center justify-content-center bg-white" style="width: 120px; height: 120px;">
+        @if (Model.LogoPreview is not null)
+        {
+            <img src="@Model.LogoPreview" alt="Company logo" style="max-width: 110px; max-height: 110px;" />
+        }
+        else
+        {
+            <span class="text-muted small">No logo</span>
+        }
+    </div>
+    <div>
+        <InputFile OnChange="OnLogoSelectedAsync" accept=".png,.jpg,.jpeg,.webp" class="form-control" />
+        <div class="form-text">PNG, JPEG or WebP, up to 1 MB.</div>
+        @if (Model.LogoPreview is not null)
+        {
+            <button type="button" class="btn btn-sm btn-outline-danger mt-2" @onclick="RemoveLogo">Remove logo</button>
+        }
+        @if (logoError is not null)
+        {
+            <div class="text-danger small mt-1">@logoError</div>
+        }
+    </div>
+</div>
+
+<h5 class="mt-4 mb-3">Contact Person</h5>
+
+<div class="row" style="max-width: 700px;">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Contact Person Name</label>
+        <InputText class="form-control" @bind-Value="Model.ContactPersonName" />
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Contact Person Number</label>
+        <InputText class="form-control" @bind-Value="Model.ContactPersonPhone" />
+    </div>
+</div>
+
+<h5 class="mt-4 mb-3">Tax &amp; E-Invoicing</h5>
+
+<div class="row" style="max-width: 700px;">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">TRN (Tax Registration Number)</label>
+        <InputText class="form-control" maxlength="15" @bind-Value="Model.Trn" placeholder="15 digits" />
+        <ValidationMessage For="@(() => Model.Trn)" class="text-danger" />
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">TIN Number</label>
+        <InputText class="form-control" @bind-Value="Model.Tin" />
+    </div>
+</div>
+
+<div class="mb-3" style="max-width: 700px;">
+    <label class="form-label">PEPPOL Participant ID</label>
+    <InputText class="form-control" @bind-Value="Model.PeppolParticipantId" placeholder="scheme:identifier" />
+    <ValidationMessage For="@(() => Model.PeppolParticipantId)" class="text-danger" />
+</div>
+
+<h5 class="mt-4 mb-3">Bank Details</h5>
+
+<div class="row" style="max-width: 700px;">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Account Holder Name</label>
+        <InputText class="form-control" @bind-Value="Model.BankAccountHolderName" />
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Bank Name</label>
+        <InputText class="form-control" @bind-Value="Model.BankName" />
+    </div>
+</div>
+
+<div class="row" style="max-width: 700px;">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Bank Account Number</label>
+        <InputText class="form-control" @bind-Value="Model.BankAccountNumber" />
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">IBAN Number</label>
+        <InputText class="form-control" maxlength="42" @bind-Value="Model.Iban" placeholder="AE07 0331 2345 6789 0123 456" />
+        <ValidationMessage For="@(() => Model.Iban)" class="text-danger" />
+    </div>
+</div>
+
+<div class="row" style="max-width: 700px;">
+    <div class="col-md-4 mb-3">
+        <label class="form-label">SWIFT Code</label>
+        <InputText class="form-control" maxlength="11" @bind-Value="Model.SwiftCode" />
+        <ValidationMessage For="@(() => Model.SwiftCode)" class="text-danger" />
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label">Bank Country</label>
+        <InputSelect class="form-select" @bind-Value="Model.BankCountryId">
+            <option value="">-- Select country --</option>
+            @foreach (var country in Countries)
+            {
+                <option value="@country.Id">@country.Name</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label">Bank Currency</label>
+        <InputSelect class="form-select" @bind-Value="Model.BankCurrency">
+            <option value="">-- Select currency --</option>
+            @foreach (var currency in Currencies.All)
+            {
+                <option value="@currency.Code">@currency.Code - @currency.Name</option>
+            }
+        </InputSelect>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public CompanyFormModel Model { get; set; } = default!;
+
+    [Parameter]
+    public IReadOnlyList<CountryListItemDto> Countries { get; set; } = Array.Empty<CountryListItemDto>();
+
+    [Parameter]
+    public IReadOnlyList<CityListItemDto> Cities { get; set; } = Array.Empty<CityListItemDto>();
+
+    private string? logoError;
+
+    private IEnumerable<CityListItemDto> CitiesForSelectedCountry =>
+        Model.CountryId is null ? Array.Empty<CityListItemDto>() : Cities.Where(c => c.CountryId == Model.CountryId);
+
+    private void OnCountryChanged()
+    {
+        if (Model.CityId is not null && CitiesForSelectedCountry.All(c => c.Id != Model.CityId))
+        {
+            Model.CityId = null;
+        }
+    }
+
+    private async Task OnLogoSelectedAsync(InputFileChangeEventArgs e)
+    {
+        logoError = null;
+
+        if (e.File.Size > CompanyRules.MaxLogoBytes)
+        {
+            logoError = CompanyRules.LogoMessage;
+            return;
+        }
+
+        using var buffer = new MemoryStream();
+        await e.File.OpenReadStream(CompanyRules.MaxLogoBytes).CopyToAsync(buffer);
+        var content = buffer.ToArray();
+
+        var contentType = CompanyRules.DetectLogoContentType(content);
+        if (contentType is null)
+        {
+            logoError = CompanyRules.LogoMessage;
+            return;
+        }
+
+        Model.NewLogo = content;
+        Model.RemoveLogo = false;
+        Model.LogoPreview = $"data:{contentType};base64,{Convert.ToBase64String(content)}";
+    }
+
+    private void RemoveLogo()
+    {
+        Model.NewLogo = null;
+        Model.RemoveLogo = true;
+        Model.LogoPreview = null;
+        logoError = null;
+    }
+}

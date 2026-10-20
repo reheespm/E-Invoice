@@ -46,6 +46,9 @@ public class CompanyManagementService : ICompanyManagementService
 
         var cityName = await _dbContext.Cities.Where(c => c.Id == company.CityId).Select(c => c.Name).FirstOrDefaultAsync();
         var countryName = await _dbContext.Countries.Where(c => c.Id == company.CountryId).Select(c => c.Name).FirstOrDefaultAsync();
+        var bankCountryName = company.BankCountryId is null
+            ? null
+            : await _dbContext.Countries.Where(c => c.Id == company.BankCountryId).Select(c => c.Name).FirstOrDefaultAsync();
 
         return new CompanyDetailDto
         {
@@ -61,6 +64,21 @@ public class CompanyManagementService : ICompanyManagementService
             Phone = company.Phone,
             Email = company.Email,
             Website = company.Website,
+            ContactPersonName = company.ContactPersonName,
+            ContactPersonPhone = company.ContactPersonPhone,
+            Trn = company.Trn,
+            PeppolParticipantId = company.PeppolParticipantId,
+            Tin = company.Tin,
+            BankAccountHolderName = company.BankAccountHolderName,
+            BankName = company.BankName,
+            BankAccountNumber = company.BankAccountNumber,
+            Iban = company.Iban,
+            SwiftCode = company.SwiftCode,
+            BankCountryId = company.BankCountryId,
+            BankCountry = bankCountryName,
+            BankCurrency = company.BankCurrency,
+            LogoContent = company.LogoContent,
+            LogoContentType = company.LogoContentType,
             CreatedAtUtc = company.CreatedAtUtc,
             CreatedBy = company.CreatedBy,
             ModifiedAtUtc = company.ModifiedAtUtc,
@@ -70,7 +88,7 @@ public class CompanyManagementService : ICompanyManagementService
 
     public async Task<ServiceResult<Guid>> CreateCompanyAsync(SaveCompanyDto dto)
     {
-        var validationError = await ValidateLocationAsync(dto);
+        var validationError = await ValidateAsync(dto);
         if (validationError is not null)
         {
             return ServiceResult<Guid>.Failure(validationError);
@@ -79,18 +97,10 @@ public class CompanyManagementService : ICompanyManagementService
         var company = new Company
         {
             Id = Guid.NewGuid(),
-            Name = dto.Name,
-            Address = dto.Address,
-            Street = dto.Street,
-            CityId = dto.CityId,
-            CountryId = dto.CountryId,
-            PoBox = dto.PoBox,
-            Phone = dto.Phone,
-            Email = dto.Email,
-            Website = dto.Website,
             CreatedAtUtc = DateTime.UtcNow,
             CreatedBy = dto.PerformedBy,
         };
+        Apply(company, dto);
 
         _dbContext.Companies.Add(company);
         await _dbContext.SaveChangesAsync();
@@ -111,21 +121,13 @@ public class CompanyManagementService : ICompanyManagementService
             return ServiceResult.Failure("Company not found.");
         }
 
-        var validationError = await ValidateLocationAsync(dto);
+        var validationError = await ValidateAsync(dto);
         if (validationError is not null)
         {
             return ServiceResult.Failure(validationError);
         }
 
-        company.Name = dto.Name;
-        company.Address = dto.Address;
-        company.Street = dto.Street;
-        company.CityId = dto.CityId;
-        company.CountryId = dto.CountryId;
-        company.PoBox = dto.PoBox;
-        company.Phone = dto.Phone;
-        company.Email = dto.Email;
-        company.Website = dto.Website;
+        Apply(company, dto);
         company.ModifiedAtUtc = DateTime.UtcNow;
         company.ModifiedBy = dto.PerformedBy;
 
@@ -145,7 +147,45 @@ public class CompanyManagementService : ICompanyManagementService
         return await DeleteGuard.DeleteAsync(_dbContext, company, id, company.Name);
     }
 
-    private async Task<string?> ValidateLocationAsync(SaveCompanyDto dto)
+    private static void Apply(Company company, SaveCompanyDto dto)
+    {
+        company.Name = dto.Name;
+        company.Address = dto.Address;
+        company.Street = dto.Street;
+        company.CityId = dto.CityId;
+        company.CountryId = dto.CountryId;
+        company.PoBox = dto.PoBox;
+        company.Phone = dto.Phone;
+        company.Email = dto.Email;
+        company.Website = dto.Website;
+        company.ContactPersonName = Blank(dto.ContactPersonName);
+        company.ContactPersonPhone = Blank(dto.ContactPersonPhone);
+        company.Trn = Blank(dto.Trn);
+        company.PeppolParticipantId = Blank(dto.PeppolParticipantId);
+        company.Tin = Blank(dto.Tin);
+        company.BankAccountHolderName = Blank(dto.BankAccountHolderName);
+        company.BankName = Blank(dto.BankName);
+        company.BankAccountNumber = Blank(dto.BankAccountNumber);
+        company.Iban = CompanyRules.NormalizeCode(dto.Iban);
+        company.SwiftCode = CompanyRules.NormalizeCode(dto.SwiftCode);
+        company.BankCountryId = dto.BankCountryId;
+        company.BankCurrency = Blank(dto.BankCurrency);
+
+        if (dto.LogoContent is not null)
+        {
+            company.LogoContent = dto.LogoContent;
+            company.LogoContentType = CompanyRules.DetectLogoContentType(dto.LogoContent);
+        }
+        else if (dto.RemoveLogo)
+        {
+            company.LogoContent = null;
+            company.LogoContentType = null;
+        }
+    }
+
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private async Task<string?> ValidateAsync(SaveCompanyDto dto)
     {
         var country = await _dbContext.Countries.FindAsync(dto.CountryId);
         if (country is null)
@@ -157,6 +197,41 @@ public class CompanyManagementService : ICompanyManagementService
         if (city is null || city.CountryId != dto.CountryId)
         {
             return "Selected city does not belong to the selected country.";
+        }
+
+        if (dto.BankCountryId is not null && await _dbContext.Countries.FindAsync(dto.BankCountryId.Value) is null)
+        {
+            return "Selected bank country does not exist.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.BankCurrency) && !Currencies.IsSupported(dto.BankCurrency))
+        {
+            return "Selected bank currency is not supported.";
+        }
+
+        if (!CompanyRules.IsValidTrn(dto.Trn))
+        {
+            return CompanyRules.TrnMessage;
+        }
+
+        if (!CompanyRules.IsValidPeppolId(dto.PeppolParticipantId))
+        {
+            return CompanyRules.PeppolMessage;
+        }
+
+        if (!CompanyRules.IsValidIban(dto.Iban))
+        {
+            return CompanyRules.IbanMessage;
+        }
+
+        if (!CompanyRules.IsValidSwift(dto.SwiftCode))
+        {
+            return CompanyRules.SwiftMessage;
+        }
+
+        if (dto.LogoContent is not null && CompanyRules.DetectLogoContentType(dto.LogoContent) is null)
+        {
+            return CompanyRules.LogoMessage;
         }
 
         return null;

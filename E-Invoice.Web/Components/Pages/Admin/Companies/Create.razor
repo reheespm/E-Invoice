@@ -1,7 +1,5 @@
 @page "/admin/companies/create"
 @attribute [Authorize(Policy = Permissions.Company.Create)]
-@using System.ComponentModel.DataAnnotations
-@using System.Security.Claims
 @using EInvoice.Application.Cities
 @using EInvoice.Application.Companies
 @using EInvoice.Application.Countries
@@ -30,68 +28,7 @@
         </div>
     }
 
-    <div class="mb-3" style="max-width: 500px;">
-        <label class="form-label">Company Name <span class="text-danger">*</span></label>
-        <InputText class="form-control" @bind-Value="model.Name" />
-    </div>
-
-    <div class="mb-3" style="max-width: 500px;">
-        <label class="form-label">Address <span class="text-danger">*</span></label>
-        <InputTextArea class="form-control" @bind-Value="model.Address" />
-    </div>
-
-    <div class="mb-3" style="max-width: 500px;">
-        <label class="form-label">Street</label>
-        <InputText class="form-control" @bind-Value="model.Street" />
-    </div>
-
-    <div class="row" style="max-width: 500px;">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Country <span class="text-danger">*</span></label>
-            <InputSelect class="form-select" @bind-Value="model.CountryId" @bind-Value:after="OnCountryChanged">
-                <option value="">-- Select country --</option>
-                @if (availableCountries is not null)
-                {
-                    @foreach (var country in availableCountries)
-                    {
-                        <option value="@country.Id">@country.Name</option>
-                    }
-                }
-            </InputSelect>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">City <span class="text-danger">*</span></label>
-            <InputSelect class="form-select" @bind-Value="model.CityId" disabled="@(model.CountryId is null)">
-                <option value="">-- Select city --</option>
-                @foreach (var city in citiesForSelectedCountry)
-                {
-                    <option value="@city.Id">@city.Name</option>
-                }
-            </InputSelect>
-        </div>
-    </div>
-
-    <div class="row" style="max-width: 500px;">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">PO Box</label>
-            <InputText class="form-control" @bind-Value="model.PoBox" />
-        </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Phone <span class="text-danger">*</span></label>
-            <InputText class="form-control" @bind-Value="model.Phone" />
-        </div>
-    </div>
-
-    <div class="row" style="max-width: 500px;">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Email</label>
-            <InputText class="form-control" @bind-Value="model.Email" />
-        </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Website</label>
-            <InputText class="form-control" @bind-Value="model.Website" placeholder="https://example.com" />
-        </div>
-    </div>
+    <CompanyFormFields Model="model" Countries="availableCountries" Cities="allCities" />
 
     <button type="submit" class="btn btn-primary">Create</button>
     <a class="btn btn-secondary" href="/admin/companies">Cancel</a>
@@ -101,28 +38,15 @@
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
-    private readonly SaveCompanyFormModel model = new();
+    private readonly CompanyFormModel model = new();
     private List<string> serverErrors = new();
-    private IReadOnlyList<CountryListItemDto>? availableCountries;
+    private IReadOnlyList<CountryListItemDto> availableCountries = Array.Empty<CountryListItemDto>();
     private IReadOnlyList<CityListItemDto> allCities = Array.Empty<CityListItemDto>();
-    private IReadOnlyList<CityListItemDto> citiesForSelectedCountry = Array.Empty<CityListItemDto>();
 
     protected override async Task OnInitializedAsync()
     {
         availableCountries = await CountryService.GetCountriesAsync();
         allCities = await CityService.GetCitiesAsync();
-    }
-
-    private void OnCountryChanged()
-    {
-        citiesForSelectedCountry = model.CountryId is null
-            ? Array.Empty<CityListItemDto>()
-            : allCities.Where(c => c.CountryId == model.CountryId).ToList();
-
-        if (model.CityId is not null && citiesForSelectedCountry.All(c => c.Id != model.CityId))
-        {
-            model.CityId = null;
-        }
     }
 
     private async Task HandleSubmitAsync()
@@ -136,19 +60,7 @@
             performedBy = authState.User.Identity?.Name;
         }
 
-        var result = await CompanyService.CreateCompanyAsync(new SaveCompanyDto
-        {
-            Name = model.Name,
-            Address = model.Address,
-            Street = model.Street,
-            CityId = model.CityId!.Value,
-            CountryId = model.CountryId!.Value,
-            PoBox = model.PoBox,
-            Phone = model.Phone,
-            Email = model.Email,
-            Website = model.Website,
-            PerformedBy = performedBy,
-        });
+        var result = await CompanyService.CreateCompanyAsync(model.ToDto(null, performedBy));
 
         if (result.Succeeded)
         {
@@ -158,35 +70,5 @@
         {
             serverErrors = result.Errors.ToList();
         }
-    }
-
-    private class SaveCompanyFormModel
-    {
-        [Required, StringLength(200)]
-        public string Name { get; set; } = string.Empty;
-
-        [Required, StringLength(300)]
-        public string Address { get; set; } = string.Empty;
-
-        [StringLength(200)]
-        public string? Street { get; set; }
-
-        [Required(ErrorMessage = "City is required.")]
-        public Guid? CityId { get; set; }
-
-        [Required(ErrorMessage = "Country is required.")]
-        public Guid? CountryId { get; set; }
-
-        [StringLength(50)]
-        public string? PoBox { get; set; }
-
-        [Required, StringLength(50)]
-        public string Phone { get; set; } = string.Empty;
-
-        [EmailAddress, StringLength(256)]
-        public string? Email { get; set; }
-
-        [StringLength(256)]
-        public string? Website { get; set; }
     }
 }
