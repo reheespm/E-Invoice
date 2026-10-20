@@ -105,15 +105,6 @@ public class CountryManagementService : ICountryManagementService
             return ServiceResult.Failure("Country not found.");
         }
 
-        var cityCount = await _dbContext.Cities.CountAsync(c => c.CountryId == id);
-        if (cityCount > 0)
-        {
-            return ServiceResult.Failure($"Cannot delete '{country.Name}': {cityCount} city record(s) still reference it.");
-        }
-
-        _dbContext.Countries.Remove(country);
-        await _dbContext.SaveChangesAsync();
-
-        return ServiceResult.Success();
+        return await DeleteGuard.DeleteAsync(_dbContext, country, id, country.Name);
     }
 }

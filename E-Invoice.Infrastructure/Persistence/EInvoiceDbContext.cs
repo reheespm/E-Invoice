@@ -142,5 +142,25 @@ public class EInvoiceDbContext : IdentityDbContext<
         builder.Entity<IdentityUserLogin<Guid>>(e => e.ToTable("UserLogins"));
         builder.Entity<IdentityRoleClaim<Guid>>(e => e.ToTable("RoleClaims"));
         builder.Entity<IdentityUserToken<Guid>>(e => e.ToTable("UserTokens"));
+
+        // A record that is still referenced must not be deleted (the database refuses it and DeleteGuard explains why).
+        // Only a user's or role's own detail rows are deleted together with it. New relationships, e.g. invoices,
+        // get Restrict automatically.
+        foreach (var foreignKey in builder.Model.GetEntityTypes().SelectMany(t => t.GetForeignKeys()))
+        {
+            if (!IsOwnedDetail(foreignKey.DeclaringEntityType.ClrType, foreignKey.PrincipalEntityType.ClrType))
+            {
+                foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
+            }
+        }
     }
+
+    private static bool IsOwnedDetail(Type dependent, Type principal) =>
+        dependent == typeof(IdentityUserClaim<Guid>)
+        || dependent == typeof(IdentityUserLogin<Guid>)
+        || dependent == typeof(IdentityUserToken<Guid>)
+        || dependent == typeof(IdentityRoleClaim<Guid>)
+        || dependent == typeof(UserDashboardWidget)
+        || dependent == typeof(UserQuickLink)
+        || (principal == typeof(ApplicationUser) && (dependent == typeof(IdentityUserRole<Guid>) || dependent == typeof(UserCompany)));
 }

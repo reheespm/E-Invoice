@@ -160,10 +160,7 @@ public class CustomerManagementService : ICustomerManagementService
             return ServiceResult.Failure("Customer not found.");
         }
 
-        _dbContext.Customers.Remove(customer);
-        await _dbContext.SaveChangesAsync();
-
-        return ServiceResult.Success();
+        return await DeleteGuard.DeleteAsync(_dbContext, customer, id, customer.Name);
     }
 
     private async Task<string?> ValidateLocationAsync(SaveCustomerDto dto)

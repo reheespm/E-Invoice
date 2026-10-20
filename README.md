@@ -54,3 +54,6 @@ The tool copies all rows (users keep their passwords) and refuses to run if the 
 2. Add the entity, DTOs and `IInvoiceManagementService`.
 3. Add the `DbSet`/mapping in `EInvoiceDbContext` and the service in `E-Invoice.Infrastructure/Services`,
    register it in `DependencyInjection.cs`, add a migration, then the pages and nav link.
+4. Deleting: call `DeleteGuard.DeleteAsync(...)` in the service's delete method. New foreign keys are `Restrict`
+   automatically (see the end of `EInvoiceDbContext.OnModelCreating`), so a record that is still referenced
+   (e.g. a customer used by an invoice) cannot be deleted and the user sees what is still connected.

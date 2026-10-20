@@ -142,10 +142,7 @@ public class CompanyManagementService : ICompanyManagementService
             return ServiceResult.Failure("Company not found.");
         }
 
-        _dbContext.Companies.Remove(company);
-        await _dbContext.SaveChangesAsync();
-
-        return ServiceResult.Success();
+        return await DeleteGuard.DeleteAsync(_dbContext, company, id, company.Name);
     }
 
     private async Task<string?> ValidateLocationAsync(SaveCompanyDto dto)
