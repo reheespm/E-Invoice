@@ -25,7 +25,7 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-        services.AddDbContext<EInvoiceDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddDbContext<EInvoiceDbContext>(options => options.UseNpgsql(connectionString));
 
         // Keep login cookies / anti-forgery keys in the database so users stay signed in across
         // restarts and redeploys, and so several server instances can share them later in the cloud.

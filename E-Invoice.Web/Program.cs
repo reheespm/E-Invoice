@@ -36,7 +36,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// SQL Server (EF Core) + Identity + application services.
+// PostgreSQL / Supabase (EF Core) + Identity + application services.
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
