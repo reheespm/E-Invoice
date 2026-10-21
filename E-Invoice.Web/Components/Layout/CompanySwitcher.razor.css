@@ -1,0 +1,34 @@
+.company-switcher {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 1rem;
+}
+
+.company-switcher-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.company-switcher select {
+    min-width: 16rem;
+    max-width: 24rem;
+}
+
+.company-switcher select:disabled {
+    background-color: #f3f5f8;
+    color: #1f2937;
+    opacity: 1;
+}
+
+@media (max-width: 900px) {
+    .company-switcher-label {
+        display: none;
+    }
+
+    .company-switcher select {
+        min-width: 9rem;
+    }
+}

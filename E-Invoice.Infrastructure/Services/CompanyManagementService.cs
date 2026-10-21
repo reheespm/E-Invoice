@@ -9,15 +9,25 @@ namespace EInvoice.Infrastructure.Services;
 public class CompanyManagementService : ICompanyManagementService
 {
     private readonly EInvoiceDbContext _dbContext;
+    private readonly ICurrentCompanyService _currentCompany;
 
-    public CompanyManagementService(EInvoiceDbContext dbContext)
+    public CompanyManagementService(EInvoiceDbContext dbContext, ICurrentCompanyService currentCompany)
     {
         _dbContext = dbContext;
+        _currentCompany = currentCompany;
     }
 
+    /// <summary>The company selected in the header (the list is filtered to it).</summary>
     public async Task<IReadOnlyList<CompanyListItemDto>> GetCompaniesAsync()
     {
+        var companyId = await _currentCompany.GetSelectedCompanyIdAsync();
+        if (companyId is null)
+        {
+            return Array.Empty<CompanyListItemDto>();
+        }
+
         return await _dbContext.Companies
+            .Where(c => c.Id == companyId)
             .OrderBy(c => c.Name)
             .Select(c => new CompanyListItemDto
             {
@@ -36,9 +46,17 @@ public class CompanyManagementService : ICompanyManagementService
             .ToListAsync();
     }
 
+    public async Task<IReadOnlyList<CompanyOption>> GetCompanyOptionsAsync()
+    {
+        return await _dbContext.Companies
+            .OrderBy(c => c.Name)
+            .Select(c => new CompanyOption(c.Id, c.Name))
+            .ToListAsync();
+    }
+
     public async Task<CompanyDetailDto?> GetCompanyByIdAsync(Guid id)
     {
-        var company = await _dbContext.Companies.FindAsync(id);
+        var company = await FindAssignedAsync(id);
         if (company is null)
         {
             return null;
@@ -103,6 +121,14 @@ public class CompanyManagementService : ICompanyManagementService
         Apply(company, dto);
 
         _dbContext.Companies.Add(company);
+
+        // The creator gets access straight away, so the new company appears in their company selector.
+        var userId = (await _currentCompany.GetAsync()).UserId;
+        if (userId is not null)
+        {
+            _dbContext.UserCompanies.Add(new UserCompany { UserId = userId.Value, CompanyId = company.Id });
+        }
+
         await _dbContext.SaveChangesAsync();
 
         return ServiceResult<Guid>.Success(company.Id);
@@ -115,7 +141,7 @@ public class CompanyManagementService : ICompanyManagementService
             return ServiceResult.Failure("Company id is required.");
         }
 
-        var company = await _dbContext.Companies.FindAsync(dto.Id.Value);
+        var company = await FindAssignedAsync(dto.Id.Value);
         if (company is null)
         {
             return ServiceResult.Failure("Company not found.");
@@ -138,13 +164,20 @@ public class CompanyManagementService : ICompanyManagementService
 
     public async Task<ServiceResult> DeleteCompanyAsync(Guid id)
     {
-        var company = await _dbContext.Companies.FindAsync(id);
+        var company = await FindAssignedAsync(id);
         if (company is null)
         {
             return ServiceResult.Failure("Company not found.");
         }
 
         return await DeleteGuard.DeleteAsync(_dbContext, company, id, company.Name);
+    }
+
+    /// <summary>Only companies assigned to the signed-in user can be opened, changed or deleted.</summary>
+    private async Task<Company?> FindAssignedAsync(Guid id)
+    {
+        var current = await _currentCompany.GetAsync();
+        return current.Companies.Any(c => c.Id == id) ? await _dbContext.Companies.FindAsync(id) : null;
     }
 
     private static void Apply(Company company, SaveCompanyDto dto)

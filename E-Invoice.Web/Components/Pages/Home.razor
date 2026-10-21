@@ -2,7 +2,9 @@
 @attribute [Authorize(Policy = Permissions.Dashboard.View)]
 @using Microsoft.AspNetCore.Identity
 @using EInvoice.Application.Cities
+@using EInvoice.Application.Common
 @using EInvoice.Application.Companies
+@using EInvoice.Application.Customers
 @using EInvoice.Application.Countries
 @using EInvoice.Application.Dashboard
 @using EInvoice.Application.Roles
@@ -11,7 +13,8 @@
 @using EInvoice.Infrastructure.Identity
 @inject IUserManagementService UserService
 @inject IRoleManagementService RoleService
-@inject ICompanyManagementService CompanyService
+@inject ICurrentCompanyService CurrentCompany
+@inject ICustomerManagementService CustomerService
 @inject ICountryManagementService CountryService
 @inject ICityManagementService CityService
 @inject IDashboardService DashboardService
@@ -70,15 +73,25 @@
     @if (selectedWidgetKeys.Contains(DashboardWidgets.CompaniesSummary) && canViewCompanies)
     {
         <div class="dashboard-widget">
-            <h2 class="dashboard-widget-title">Companies Summary</h2>
+            <h2 class="dashboard-widget-title">Company Summary</h2>
             <div class="stat-widget">
                 <div class="stat-item">
                     <span class="stat-icon stat-icon-users">
                         <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M4 1a1 1 0 0 0-1 1v13h2v-2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2h2V2a1 1 0 0 0-1-1H4Zm1 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1A.5.5 0 0 1 5 4Zm3.5-.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1ZM5 7a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1A.5.5 0 0 1 5 7Zm3.5-.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1ZM5 10a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1A.5.5 0 0 1 5 10Zm3.5-.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1Z"/><path d="M0 14.5A.5.5 0 0 1 .5 14H1V3a1 1 0 0 1 1-1h1V1a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v11h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5ZM3 3v11h1V3H3Zm10 11V4h-1v10h1Z"/></svg>
                     </span>
-                    <div class="stat-label">Total Companies</div>
-                    <div class="stat-value">@totalCompanies</div>
+                    <div class="stat-label">Selected Company</div>
+                    <div class="stat-value" style="font-size: 1.1rem;">@(selectedCompanyName ?? "None assigned")</div>
                 </div>
+                @if (canViewCustomers)
+                {
+                    <div class="stat-item">
+                        <span class="stat-icon stat-icon-users">
+                            <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 8a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm0 1c-2.4 0-4 1.54-4 3.5V14h8v-1.5C12 10.54 10.4 9 8 9Zm5.5-5.5A1.5 1.5 0 0 1 12 5v.5h1.5A1.5 1.5 0 0 1 15 7v5.5H13.5V7A1.5 1.5 0 0 0 12 5.5H9.5V5A1.5 1.5 0 0 1 11 3.5h2.5Z"/></svg>
+                        </span>
+                        <div class="stat-label">Customers</div>
+                        <div class="stat-value">@totalCustomers</div>
+                    </div>
+                }
             </div>
         </div>
     }
@@ -199,6 +212,7 @@
 
     private bool canViewUsers;
     private bool canViewCompanies;
+    private bool canViewCustomers;
     private bool canViewCountries;
     private bool canViewCities;
 
@@ -206,7 +220,8 @@
     private int activeUsers;
     private int lockedUsers;
     private int totalRoles;
-    private int totalCompanies;
+    private string? selectedCompanyName;
+    private int totalCustomers;
     private int totalCountries;
     private int totalCities;
 
@@ -225,6 +240,7 @@
 
         canViewUsers = HasPermission(Permissions.User.View);
         canViewCompanies = HasPermission(Permissions.Company.View);
+        canViewCustomers = HasPermission(Permissions.Customer.View);
         canViewCountries = HasPermission(Permissions.Country.View);
         canViewCities = HasPermission(Permissions.City.View);
 
@@ -251,9 +267,15 @@
         selectedQuickLinkKeys = savedLinks.Where(availableLinkKeys.Contains).ToList();
         visibleQuickLinks = availableQuickLinks.Where(l => selectedQuickLinkKeys.Contains(l.Key)).ToList();
 
+        // Company-specific figures are for the company selected in the header.
+        var selectedCompany = (await CurrentCompany.GetAsync()).Selected;
+        selectedCompanyName = selectedCompany?.Name;
+
         if (canViewUsers)
         {
-            var users = await UserService.GetUsersAsync();
+            var users = (await UserService.GetUsersAsync())
+                .Where(u => selectedCompany is not null && u.CompanyIds.Contains(selectedCompany.Id))
+                .ToList();
             totalUsers = users.Count;
             activeUsers = users.Count(u => u.IsActive);
             lockedUsers = users.Count(u => u.IsLockedOut);
@@ -262,10 +284,9 @@
             totalRoles = roles.Count;
         }
 
-        if (canViewCompanies)
+        if (canViewCompanies && canViewCustomers)
         {
-            var companies = await CompanyService.GetCompaniesAsync();
-            totalCompanies = companies.Count;
+            totalCustomers = (await CustomerService.GetCustomersAsync()).Count;
         }
 
         if (canViewCountries)

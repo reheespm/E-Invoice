@@ -94,14 +94,14 @@
 @code {
     private readonly CreateUserFormModel model = new();
     private IReadOnlyList<RoleListItemDto>? availableRoles;
-    private IReadOnlyList<CompanyListItemDto>? availableCompanies;
+    private IReadOnlyList<EInvoice.Application.Common.CompanyOption>? availableCompanies;
     private IReadOnlyList<UserListItemDto>? availableUsers;
     private List<string> serverErrors = new();
 
     protected override async Task OnInitializedAsync()
     {
         availableRoles = await RoleService.GetRolesAsync();
-        availableCompanies = await CompanyService.GetCompaniesAsync();
+        availableCompanies = await CompanyService.GetCompanyOptionsAsync();
         availableUsers = await UserService.GetUsersAsync();
     }
 

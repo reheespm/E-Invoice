@@ -9,15 +9,25 @@ namespace EInvoice.Infrastructure.Services;
 public class CustomerManagementService : ICustomerManagementService
 {
     private readonly EInvoiceDbContext _dbContext;
+    private readonly ICurrentCompanyService _currentCompany;
 
-    public CustomerManagementService(EInvoiceDbContext dbContext)
+    public CustomerManagementService(EInvoiceDbContext dbContext, ICurrentCompanyService currentCompany)
     {
         _dbContext = dbContext;
+        _currentCompany = currentCompany;
     }
 
+    // Customers belong to a company: every operation is limited to the company selected in the header.
     public async Task<IReadOnlyList<CustomerListItemDto>> GetCustomersAsync()
     {
+        var companyId = await _currentCompany.GetSelectedCompanyIdAsync();
+        if (companyId is null)
+        {
+            return Array.Empty<CustomerListItemDto>();
+        }
+
         return await _dbContext.Customers
+            .Where(c => c.CompanyId == companyId)
             .OrderBy(c => c.Name)
             .Select(c => new CustomerListItemDto
             {
@@ -41,7 +51,7 @@ public class CustomerManagementService : ICustomerManagementService
 
     public async Task<CustomerDetailDto?> GetCustomerByIdAsync(Guid id)
     {
-        var customer = await _dbContext.Customers.FindAsync(id);
+        var customer = await FindInSelectedCompanyAsync(id);
         if (customer is null)
         {
             return null;
@@ -80,6 +90,7 @@ public class CustomerManagementService : ICustomerManagementService
 
     public async Task<ServiceResult<Guid>> CreateCustomerAsync(SaveCustomerDto dto)
     {
+        dto.CompanyId = await _currentCompany.GetSelectedCompanyIdAsync();
         var validationError = await ValidateLocationAsync(dto);
         if (validationError is not null)
         {
@@ -119,12 +130,13 @@ public class CustomerManagementService : ICustomerManagementService
             return ServiceResult.Failure("Customer id is required.");
         }
 
-        var customer = await _dbContext.Customers.FindAsync(dto.Id.Value);
+        var customer = await FindInSelectedCompanyAsync(dto.Id.Value);
         if (customer is null)
         {
             return ServiceResult.Failure("Customer not found.");
         }
 
+        dto.CompanyId = customer.CompanyId;
         var validationError = await ValidateLocationAsync(dto);
         if (validationError is not null)
         {
@@ -154,7 +166,7 @@ public class CustomerManagementService : ICustomerManagementService
 
     public async Task<ServiceResult> DeleteCustomerAsync(Guid id)
     {
-        var customer = await _dbContext.Customers.FindAsync(id);
+        var customer = await FindInSelectedCompanyAsync(id);
         if (customer is null)
         {
             return ServiceResult.Failure("Customer not found.");
@@ -163,11 +175,19 @@ public class CustomerManagementService : ICustomerManagementService
         return await DeleteGuard.DeleteAsync(_dbContext, customer, id, customer.Name);
     }
 
+    private async Task<Customer?> FindInSelectedCompanyAsync(Guid id)
+    {
+        var companyId = await _currentCompany.GetSelectedCompanyIdAsync();
+        return companyId is null
+            ? null
+            : await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == id && c.CompanyId == companyId);
+    }
+
     private async Task<string?> ValidateLocationAsync(SaveCustomerDto dto)
     {
         if (dto.CompanyId is null)
         {
-            return "Company is required.";
+            return "No company is selected. Ask an administrator to assign you to a company.";
         }
 
         if (await _dbContext.Companies.FindAsync(dto.CompanyId.Value) is null)

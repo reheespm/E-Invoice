@@ -1,4 +1,5 @@
 using EInvoice.Application.Cities;
+using EInvoice.Application.Common;
 using EInvoice.Application.Companies;
 using EInvoice.Application.Countries;
 using EInvoice.Application.Customers;
@@ -25,7 +26,9 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-        services.AddDbContext<EInvoiceDbContext>(options => options.UseNpgsql(connectionString));
+        // Registers both the scoped EInvoiceDbContext and IDbContextFactory<EInvoiceDbContext> (for code that can run
+        // concurrently with a page in the same scope, e.g. the header's company selector).
+        services.AddDbContextFactory<EInvoiceDbContext>(options => options.UseNpgsql(connectionString));
 
         // Keep login cookies / anti-forgery keys in the database so users stay signed in across
         // restarts and redeploys, and so several server instances can share them later in the cloud.
@@ -58,6 +61,7 @@ public static class DependencyInjection
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
+        services.AddScoped<ICurrentCompanyService, CurrentCompanyService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<IRoleManagementService, RoleManagementService>();
         services.AddScoped<ICompanyManagementService, CompanyManagementService>();

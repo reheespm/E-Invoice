@@ -220,10 +220,11 @@ public class UserManagementService : IUserManagementService
     private async Task<UserListItemDto> MapAsync(ApplicationUser user)
     {
         var roles = await _userManager.GetRolesAsync(user);
-        var companyNames = await _dbContext.UserCompanies
+        var companies = await _dbContext.UserCompanies
             .Where(uc => uc.UserId == user.Id)
-            .Join(_dbContext.Companies, uc => uc.CompanyId, c => c.Id, (uc, c) => c.Name)
-            .OrderBy(name => name)
+            .Join(_dbContext.Companies, uc => uc.CompanyId, c => c.Id, (uc, c) => c)
+            .OrderBy(c => c.Name)
+            .Select(c => new { c.Id, c.Name })
             .ToListAsync();
 
         return new UserListItemDto
@@ -236,7 +237,8 @@ public class UserManagementService : IUserManagementService
             IsActive = user.IsActive,
             IsLockedOut = await _userManager.IsLockedOutAsync(user),
             Roles = roles.ToList(),
-            Companies = companyNames,
+            Companies = companies.Select(c => c.Name).ToList(),
+            CompanyIds = companies.Select(c => c.Id).ToList(),
         };
     }
 }

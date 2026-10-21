@@ -389,6 +389,9 @@ namespace EInvoice.Infrastructure.Persistence.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("SelectedCompanyId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean");
 
@@ -633,7 +636,7 @@ namespace EInvoice.Infrastructure.Persistence.Migrations
                     b.HasOne("EInvoice.Domain.Entities.Company", null)
                         .WithMany()
                         .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("EInvoice.Infrastructure.Identity.ApplicationUser", null)

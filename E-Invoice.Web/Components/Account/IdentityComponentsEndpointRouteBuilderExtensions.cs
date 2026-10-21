@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using EInvoice.Application.Common;
 using EInvoice.Web.Components.Account.Pages;
 using EInvoice.Web.Components.Account.Pages.Manage;
 using EInvoice.Infrastructure.Identity;
@@ -48,6 +49,21 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
             await signInManager.SignOutAsync();
             return TypedResults.LocalRedirect($"~/{returnUrl}");
         });
+
+        // Company selector in the header (Layout/CompanySwitcher). Back to the dashboard afterwards, so no screen keeps
+        // showing records of the previous company.
+        accountGroup.MapPost("/SelectCompany", async (
+            ClaimsPrincipal user,
+            [FromServices] ICurrentCompanyService currentCompany,
+            [FromForm] Guid companyId) =>
+        {
+            if (Guid.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                await currentCompany.SelectAsync(userId, companyId);
+            }
+
+            return TypedResults.LocalRedirect("~/");
+        }).RequireAuthorization();
 
         var manageGroup = accountGroup.MapGroup("/Manage").RequireAuthorization();
 

@@ -175,5 +175,6 @@ public class EInvoiceDbContext : IdentityDbContext<
         || dependent == typeof(IdentityRoleClaim<Guid>)
         || dependent == typeof(UserDashboardWidget)
         || dependent == typeof(UserQuickLink)
-        || (principal == typeof(ApplicationUser) && (dependent == typeof(IdentityUserRole<Guid>) || dependent == typeof(UserCompany)));
+        || dependent == typeof(UserCompany) // assignments only; a company is still protected by its customers/invoices
+        || (principal == typeof(ApplicationUser) && dependent == typeof(IdentityUserRole<Guid>));
 }

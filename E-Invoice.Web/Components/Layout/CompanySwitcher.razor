@@ -1,0 +1,34 @@
+@* Company selector in the header. Enabled only when the user has more than one company. Choosing a company saves it
+   (Account/SelectCompany) and reloads the dashboard, so every screen shows that company's data. *@
+@using EInvoice.Application.Common
+@inject ICurrentCompanyService CurrentCompany
+
+<AuthorizeView>
+    <Authorized>
+        <form class="company-switcher" method="post" action="Account/SelectCompany" data-enhance="false">
+            <AntiforgeryToken />
+            <label for="company-switcher-select" class="company-switcher-label">Company</label>
+            <select id="company-switcher-select" name="companyId" class="form-select form-select-sm"
+                    disabled="@(info.Companies.Count <= 1)" onchange="this.form.submit()"
+                    title="@(info.Companies.Count <= 1 ? "You have access to one company only" : "Switch company")">
+                @if (info.Companies.Count == 0)
+                {
+                    <option value="">No company assigned</option>
+                }
+                @foreach (var company in info.Companies)
+                {
+                    <option value="@company.Id" selected="@(company.Id == info.Selected?.Id)">@company.Name</option>
+                }
+            </select>
+        </form>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private CurrentCompanyInfo info = new(null, Array.Empty<CompanyOption>(), null);
+
+    protected override async Task OnInitializedAsync()
+    {
+        info = await CurrentCompany.GetAsync();
+    }
+}

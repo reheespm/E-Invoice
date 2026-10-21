@@ -4,7 +4,11 @@ namespace EInvoice.Application.Companies;
 
 public interface ICompanyManagementService
 {
+    /// <summary>The company selected in the header (the Company master is filtered to it).</summary>
     Task<IReadOnlyList<CompanyListItemDto>> GetCompaniesAsync();
+
+    /// <summary>All companies, unfiltered, e.g. for assigning companies to a user.</summary>
+    Task<IReadOnlyList<CompanyOption>> GetCompanyOptionsAsync();
 
     Task<CompanyDetailDto?> GetCompanyByIdAsync(Guid id);
 

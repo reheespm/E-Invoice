@@ -11,12 +11,12 @@ public class UserListItemDto
     public bool IsLockedOut { get; set; }
     public IReadOnlyList<string> Roles { get; set; } = Array.Empty<string>();
     public IReadOnlyList<string> Companies { get; set; } = Array.Empty<string>();
+    public IReadOnlyList<Guid> CompanyIds { get; set; } = Array.Empty<Guid>();
 }
 
 public class UserDetailDto : UserListItemDto
 {
     public string? PhoneNumber { get; set; }
-    public IReadOnlyList<Guid> CompanyIds { get; set; } = Array.Empty<Guid>();
 }
 
 public class CreateUserDto
